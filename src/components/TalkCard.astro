@@ -1,0 +1,246 @@
+---
+import BaseCard from "./BaseCard.astro";
+import { Image } from "astro:assets";
+
+interface Props {
+  title: string;
+  description: string;
+  event: string;
+  eventUrl?: string;
+  date: Date;
+  location: string;
+  type:
+    | "conference"
+    | "meetup"
+    | "podcast"
+    | "workshop"
+    | "webinar"
+    | "mentoring";
+  slides?: string;
+  video?: string;
+  duration?: string;
+  topics?: string[];
+  image?: any; // The astro statically imported image object
+  featured?: boolean;
+}
+
+const {
+  title,
+  description,
+  event,
+  date,
+  location,
+  type,
+  slides,
+  video,
+  duration,
+  image,
+  topics = [],
+} = Astro.props;
+
+const formattedDate = new Intl.DateTimeFormat("en-US", {
+  year: "numeric",
+  month: "short",
+}).format(date);
+
+const typeLabels: Record<string, string> = {
+  conference: "Conference",
+  meetup: "Meetup",
+  podcast: "Podcast",
+  workshop: "Workshop",
+  webinar: "Webinar",
+  mentoring: "Mentoring",
+};
+---
+
+<BaseCard href={slides || video} class="talk-card">
+  {
+    image && (
+      <div slot="image" class="card-image">
+        <Image
+          src={image}
+          alt={`${title} — ${event}`}
+          loading="lazy"
+          width={800}
+        />
+      </div>
+    )
+  }
+
+  <Fragment slot="meta">{formattedDate} · {location}</Fragment>
+
+  <div slot="badge" class="card-badges">
+    <span class="badge badge--type" data-type={type}>{typeLabels[type]}</span>
+  </div>
+
+  <Fragment slot="title">{title}</Fragment>
+  <Fragment slot="description">{description}</Fragment>
+
+  <div slot="tags" class="talk-tags">
+    <div class="event-venue">
+      <span class="venue-name">{event}</span>
+      {duration && <span class="venue-separator">·</span>}
+      {duration && <span class="venue-duration">{duration}</span>}
+    </div>
+
+    {
+      topics.length > 0 && (
+        <div class="topics-list">
+          {topics.map((topic) => (
+            <span class="tag">{topic}</span>
+          ))}
+        </div>
+      )
+    }
+  </div>
+
+  {
+    (slides || video) && (
+      <div class="talk-footer">
+        {slides && (
+          <div class="footer-link">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM12 8v4l3 3" />
+            </svg>
+            View Slides
+          </div>
+        )}
+        {video && (
+          <div class="footer-link">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <polygon points="5 3 19 12 5 21 5 3" />
+            </svg>
+            Watch Video
+          </div>
+        )}
+      </div>
+    )
+  }
+</BaseCard>
+
+<style>
+  .talk-card :global(.card-badges) {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.625rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+  }
+
+  .badge--type[data-type="conference"] {
+    color: var(--color-text-muted);
+    border-color: var(--color-border);
+  }
+
+  .badge--type[data-type="meetup"] {
+    color: #10b981;
+    border-color: #10b981;
+  }
+
+  .badge--type[data-type="podcast"],
+  .badge--type[data-type="webinar"] {
+    color: #ec4899;
+    border-color: #ec4899;
+  }
+
+  .badge--type[data-type="workshop"],
+  .badge--type[data-type="mentoring"] {
+    color: #6366f1;
+    border-color: #6366f1;
+  }
+
+  .talk-tags {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .event-venue {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    opacity: 0.9;
+  }
+
+  .venue-name {
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  .venue-separator {
+    color: var(--color-text-muted);
+  }
+
+  .venue-duration {
+    font-size: 0.8125rem;
+    color: var(--color-text-muted);
+  }
+
+  .topics-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .tag {
+    font-size: 0.6875rem;
+    padding: 0.2rem 0.6rem;
+    background: var(--color-bg-elevated);
+    border-radius: 4px;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+  }
+
+  .talk-footer {
+    display: flex;
+    gap: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .footer-link {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    transition: color 0.2s ease;
+  }
+
+  .talk-card:hover .footer-link {
+    color: var(--color-text-secondary);
+  }
+
+  .footer-link svg {
+    opacity: 0.7;
+  }
+</style>
