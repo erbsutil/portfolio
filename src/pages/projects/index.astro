@@ -1,0 +1,133 @@
+---
+/**
+ * Projects Index Page
+ *
+ * Lists all projects as case studies with impact summaries. Projects are displayed
+ * in a prioritized order: custom order (if specified) takes precedence, otherwise
+ * sorted by year (most recent first). Featured projects are highlighted.
+ *
+ * Features:
+ * - Queries all projects from content collection
+ * - Smart sorting: custom order → year (descending)
+ * - Displays project and featured count statistics
+ * - Uses ProjectCard component for consistent presentation
+ * - SEO optimization
+ * - Empty state handling
+ *
+ * Route: /projects
+ *
+ * @page
+ */
+
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SEO from "../../components/SEO.astro";
+import ProjectCard from "../../components/ProjectCard.astro";
+import { getCollection } from "astro:content";
+import { pagesConfig } from "../../pages.config";
+
+/**
+ * Queries all projects from the content collection
+ */
+const allProjects = await getCollection("projects");
+
+/**
+ * Sorts projects with intelligent prioritization
+ *
+ * Sorting logic:
+ * 1. If both projects have an 'order' field, sort by order (ascending)
+ * 2. Projects with 'order' field are prioritized over those without
+ * 3. Projects without 'order' are sorted by year (descending - newest first)
+ *
+ * This allows manual curation of featured projects while maintaining
+ * chronological order for others.
+ */
+const sortedProjects = allProjects.sort((a, b) => b.data.year - a.data.year);
+
+const projectsByYear = sortedProjects.reduce(
+  (acc, project) => {
+    const year = project.data.year;
+    if (!acc[year]) acc[year] = [];
+    acc[year].push(project);
+    return acc;
+  },
+  {} as Record<number, typeof sortedProjects>,
+);
+
+const years = Object.keys(projectsByYear)
+  .map(Number)
+  .sort((a, b) => b - a);
+---
+
+<BaseLayout>
+  <SEO
+    slot="head"
+    title={pagesConfig.projects.title}
+    description={pagesConfig.projects.description}
+    type="website"
+  />
+
+  <main class="page-container">
+    <header class="page-header">
+      <h1 class="page-title">{pagesConfig.projects.heading}</h1>
+      <p class="page-intro">
+        {pagesConfig.projects.intro}
+      </p>
+    </header>
+
+    {
+      years.length > 0 ? (
+        <div class="projects-by-year">
+          {years.map((year) => (
+            <section class="year-section">
+              <h2 class="year-heading">{year}</h2>
+              <div class="card-list">
+                {projectsByYear[year].map((project) => (
+                  <ProjectCard
+                    title={project.data.title}
+                    slug={project.id}
+                    outcomeSummary={project.data.outcomeSummary}
+                    year={project.data.year}
+                    techStack={project.data.techStack}
+                    featured={project.data.featured}
+                    status={project.data.status}
+                    isMeta={project.data.isMeta}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      ) : (
+        <p class="empty-state">No projects available yet.</p>
+      )
+    }
+  </main>
+  <style>
+    .projects-by-year {
+      display: flex;
+      flex-direction: column;
+      gap: 3rem;
+    }
+
+    .year-section {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .year-heading {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--color-text);
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid var(--color-border);
+      margin: 0;
+    }
+
+    .card-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+  </style>
+</BaseLayout>
