@@ -110,10 +110,14 @@ const isActive = (href: string) => {
     background: var(--color-bg);
     padding: var(--space-md) 0;
     margin-bottom: var(--space-md);
+    width: 100%;
+    max-width: 100vw;
+    overflow: hidden;
   }
 
   .nav-scroll {
     flex: 1;
+    min-width: 0;
     overflow-x: auto;
     overflow-y: clip; /* clip vertically but allow focus outline to paint outside */
     -webkit-overflow-scrolling: touch;

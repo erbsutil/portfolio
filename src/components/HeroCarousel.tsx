@@ -277,7 +277,7 @@ export default function HeroCarousel({ items = [], interval = 12000 }: HeroCarou
 
         @media (max-width: 768px) {
           .hero-carousel-viewport {
-            height: 440px; /* Reduced to fix large margin */
+            height: 380px; /* Reduced to fix large margin */
           }
           .case-title {
             font-size: 1rem;
