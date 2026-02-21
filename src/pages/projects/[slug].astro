@@ -321,30 +321,31 @@ const readingTime = formatReadingTime(calculateReadingTime(allText));
     .status-badge {
       display: inline-flex;
       align-items: center;
-      font-size: 0.6875rem;
-      font-weight: 600;
+      font-size: 0.625rem;
+      font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      padding: 0.3rem 0.625rem;
-      border-radius: 4px;
+      padding: 0.25rem 0.625rem;
+      border-radius: 6px;
+      border: 1px solid transparent;
     }
 
     .status--featured {
-      background: rgba(99, 102, 241, 0.1);
+      background: rgba(59, 130, 246, 0.1);
       color: var(--color-accent);
-      border: 1px solid var(--color-accent);
+      border-color: var(--color-accent);
     }
 
     .status--ongoing {
       background: rgba(99, 102, 241, 0.1);
       color: var(--color-status-ongoing);
-      border: 1px solid var(--color-status-ongoing);
+      border-color: var(--color-status-ongoing);
     }
 
     .status--archived {
       background: rgba(115, 115, 115, 0.1);
       color: var(--color-status-archived);
-      border: 1px solid var(--color-status-archived);
+      border-color: var(--color-status-archived);
       opacity: 0.7;
     }
 
@@ -370,9 +371,11 @@ const readingTime = formatReadingTime(calculateReadingTime(allText));
     }
 
     .outcome-summary {
-      font-size: 1.125rem;
+      font-size: 1.25rem;
       line-height: 1.6;
       color: var(--color-text-secondary);
+      font-weight: 500;
+      max-width: 70ch;
     }
 
     .case-study-section {

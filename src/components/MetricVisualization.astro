@@ -51,88 +51,77 @@ function getRatingColor(percentage: number) {
 }
 ---
 
-<div class="metrics-container">
-  <div class="metrics-grid">
-    <div class="scores-row">
-      {
-        metrics
-          .filter((m) => parseScore(m.value))
-          .map((metric) => {
-            const scoreData = parseScore(metric.value)!;
-            const percentage = (scoreData.score / scoreData.total) * 100;
-            const radius = 34;
-            const circumference = 2 * Math.PI * radius;
-            const offset = circumference - (percentage / 100) * circumference;
-            const color = getRatingColor(percentage);
-
-            return (
-              <div class="metric-visual">
-                <div class="score-circle-wrapper">
-                  <svg class="score-circle" viewBox="0 0 80 80">
-                    <circle
-                      class="circle-track"
-                      cx="40"
-                      cy="40"
-                      r={radius}
-                      fill="none"
-                      stroke="var(--color-border)"
-                      stroke-width="5"
-                    />
-                    <circle
-                      class="circle-progress"
-                      cx="40"
-                      cy="40"
-                      r={radius}
-                      fill="none"
-                      stroke={color}
-                      stroke-width="5"
-                      stroke-dasharray={circumference}
-                      stroke-dashoffset={offset}
-                      stroke-linecap="round"
-                      transform="rotate(-90 40 40)"
-                    />
-                  </svg>
-                  <div class="score-value" style={`color: ${color}`}>
-                    {scoreData.score}
-                  </div>
-                </div>
-                <div class="metric-label">{metric.label}</div>
-              </div>
-            );
-          })
-      }
-    </div>
-
+<div class="impact-section">
+  <div class="lighthouse-row">
     {
-      metrics.filter((m) => !parseScore(m.value)).length > 0 && (
-        <div class="text-metrics-row">
-          {metrics
-            .filter((m) => !parseScore(m.value))
-            .map((metric) => (
-              <div class="metric-text">
-                <div class="metric-value">{metric.value}</div>
-                <div class="metric-label">{metric.label}</div>
+      metrics
+        .filter((m) => parseScore(m.value))
+        .map((metric) => {
+          const scoreData = parseScore(metric.value)!;
+          const percentage = (scoreData.score / scoreData.total) * 100;
+          const radius = 32;
+          const circumference = 2 * Math.PI * radius;
+          const offset = circumference - (percentage / 100) * circumference;
+          const color = getRatingColor(percentage);
+
+          return (
+            <div class="score-card">
+              <div class="score-circle-container">
+                <svg class="score-svg" viewBox="0 0 80 80">
+                  <circle class="track" cx="40" cy="40" r={radius} />
+                  <circle
+                    class="progress"
+                    cx="40"
+                    cy="40"
+                    r={radius}
+                    stroke={color}
+                    stroke-dasharray={circumference}
+                    stroke-dashoffset={offset}
+                  />
+                </svg>
+                <div class="score-text" style={`color: ${color}`}>
+                  {scoreData.score}
+                </div>
               </div>
-            ))}
-        </div>
-      )
+              <span class="score-label">
+                {metric.label.replace("Lighthouse ", "")}
+              </span>
+            </div>
+          );
+        })
     }
   </div>
 
   {
+    metrics.filter((m) => !parseScore(m.value)).length > 0 && (
+      <div class="qualitative-metrics">
+        <div class="divider" />
+        <div class="insights-grid">
+          {metrics
+            .filter((m) => !parseScore(m.value))
+            .map((metric) => (
+              <div class="insight-item">
+                <span class="insight-label">{metric.label}</span>
+                <span class="insight-value">{metric.value}</span>
+              </div>
+            ))}
+        </div>
+      </div>
+    )
+  }
+
+  {
     (auditSource || auditDate) && (
-      <div class="metrics-footer">
-        <div class="footer-info">
-          {auditSource && (
-            <span class="audit-source">
-              <strong>Verification:</strong> {auditSource}
-            </span>
-          )}
-          {auditDate && (
-            <span class="audit-date">
-              <strong>Date:</strong> {auditDate}
-            </span>
-          )}
+      <div class="audit-footer">
+        <div class="audit-badge-container">
+          <div class="audit-badge-item">
+            <span class="audit-badge-label">Verification</span>
+            <span class="audit-badge-value">{auditSource}</span>
+          </div>
+          <div class="audit-badge-item">
+            <span class="audit-badge-label">Audit Date</span>
+            <span class="audit-badge-value">{auditDate}</span>
+          </div>
         </div>
       </div>
     )
@@ -140,170 +129,176 @@ function getRatingColor(percentage: number) {
 </div>
 
 <style>
-  .metrics-container {
+  .impact-section {
     background: var(--color-bg-secondary);
     border: 1px solid var(--color-border);
     border-radius: 12px;
-    padding: 2.5rem 2rem;
-    margin-bottom: 2rem;
-  }
-
-  .metrics-grid {
+    padding: 2.5rem 1.5rem;
+    margin-bottom: 2.5rem;
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 2.5rem;
   }
 
-  .scores-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-    gap: 1.5rem;
-    width: 100%;
-  }
-
-  .text-metrics-row {
+  /* Lighthouse Rows */
+  .lighthouse-row {
     display: flex;
-    flex-wrap: wrap;
-    gap: 2rem;
-    padding-top: 1.5rem;
-    border-top: 1px dashed var(--color-border);
     justify-content: center;
+    gap: 2.5rem;
+    width: 100%;
+    flex-wrap: wrap;
   }
 
-  /* Score Visualization */
-  .metric-visual {
+  .score-card {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1rem;
-    text-align: center;
+    gap: 0.75rem;
   }
 
-  .score-circle-wrapper {
+  .score-circle-container {
     position: relative;
     width: 80px;
     height: 80px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
   }
 
-  .score-circle {
+  .score-svg {
     width: 100%;
     height: 100%;
+    transform: rotate(-90deg);
   }
 
-  .circle-progress {
-    transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1);
+  .track {
+    fill: none;
+    stroke: var(--color-border);
+    stroke-width: 4.5;
   }
 
-  .score-value {
+  .progress {
+    fill: none;
+    stroke-width: 5;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s ease-out;
+  }
+
+  .score-text {
     position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     font-size: 1.5rem;
     font-weight: 700;
     font-family: var(--font-mono, monospace);
   }
 
-  /* Text Visualization */
-  .metric-text {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.5rem;
-  }
-
-  .metric-value {
-    font-size: 1.25rem;
+  .score-label {
+    font-size: 0.75rem;
     font-weight: 700;
-    color: var(--color-text);
-    line-height: 1.2;
-  }
-
-  .metric-label {
-    font-size: 0.6875rem;
-    font-weight: 600;
+    color: var(--color-text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: var(--color-text-muted);
-    line-height: 1.4;
   }
 
-  .metrics-footer {
+  /* Qualitative Section */
+  .qualitative-metrics {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .divider {
+    width: 100%;
+    height: 1px;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--color-border),
+      var(--color-border) 4px,
+      transparent 4px,
+      transparent 8px
+    );
+    opacity: 0.5;
+  }
+
+  .insights-grid {
     display: flex;
     justify-content: center;
-    margin-top: 2rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--color-border);
+    gap: 3rem;
+    flex-wrap: wrap;
+    width: 100%;
   }
 
-  .footer-info {
+  .insight-item {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 0.5rem;
-    text-align: center;
-    max-width: 500px;
   }
 
-  .audit-source,
-  .audit-date {
+  .insight-label {
     font-size: 0.8125rem;
+    font-weight: 600;
     color: var(--color-text-muted);
-    line-height: 1.4;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 
-  .audit-source strong,
-  .audit-date strong {
+  .insight-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--color-text);
+  }
+
+  /* Footer */
+  .audit-footer {
+    border-top: 1px solid var(--color-border);
+    width: 100%;
+    padding-top: 1.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .audit-badge-container {
+    display: flex;
+    justify-content: center;
+    gap: 3rem;
+    flex-wrap: wrap;
+  }
+
+  .audit-badge-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .audit-badge-label {
+    font-size: 0.625rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    letter-spacing: 0.05em;
+  }
+
+  .audit-badge-value {
+    font-size: 0.8125rem;
     color: var(--color-text-secondary);
-    font-weight: 600;
+    font-weight: 500;
   }
 
   @media (max-width: 600px) {
-    .metrics-container {
-      padding: 2rem 1.25rem;
-    }
-
-    .scores-row {
+    .lighthouse-row {
+      display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 1.5rem 1rem;
+      gap: 2rem 1.5rem;
     }
 
-    .metric-visual {
-      gap: 0.75rem;
+    .insight-value {
+      font-size: 1.5rem;
     }
 
-    .score-circle-wrapper {
-      width: 70px;
-      height: 70px;
-    }
-
-    .score-value {
-      font-size: 1.25rem;
-    }
-
-    .text-metrics-row {
-      flex-direction: column;
-      align-items: center;
-      gap: 1.5rem;
-    }
-
-    .metric-text {
-      align-items: center;
-      text-align: center;
-    }
-
-    .footer-info {
-      gap: 0.75rem;
-    }
-  }
-
-  @media (max-width: 400px) {
-    .metrics-grid {
-      grid-template-columns: 1fr;
-    }
-    .metric-text {
-      grid-column: span 1;
+    .insights-grid {
+      gap: 2rem;
     }
   }
 </style>

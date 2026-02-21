@@ -143,27 +143,29 @@ const statusInfo = statusConfig[status];
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    background: var(--color-bg);
-    border: 1px solid var(--color-border);
+    padding: 0.25rem 0.625rem;
+    border-radius: 6px;
+    border: 1px solid transparent;
     transition: all 0.2s ease;
   }
 
-  /* Level 1: Primary Accents (Blue) */
+  /* Level 1: Primary Accents (Tinted) */
   .badge--featured {
+    background: rgba(59, 130, 246, 0.1); /* Blue tint */
     color: var(--color-accent);
     border-color: var(--color-accent);
   }
 
-  /* Level 2: Activity & Status (Indigo) */
+  /* Level 2: Activity & Status (Tinted) */
   .badge--ongoing {
+    background: rgba(99, 102, 241, 0.1); /* Indigo tint */
     color: var(--color-status-ongoing);
     border-color: var(--color-status-ongoing);
   }
 
-  /* Level 2: Muted Status */
+  /* Level 2: Muted Status (Tinted) */
   .badge--archived {
+    background: rgba(115, 115, 115, 0.1);
     color: var(--color-status-archived);
     border-color: var(--color-status-archived);
     opacity: 0.7;
