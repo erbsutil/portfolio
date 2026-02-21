@@ -76,6 +76,8 @@ export default function HeroCarousel({ items = [], interval = 12000 }: HeroCarou
       aria-label="Recent work highlights"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
+      onFocus={() => setIsPaused(true)}
+      onBlur={() => setIsPaused(false)}
     >
       <div className="hero-carousel-viewport">
         <div className={`hero-carousel-list ${isFading ? 'fading' : ''}`}>

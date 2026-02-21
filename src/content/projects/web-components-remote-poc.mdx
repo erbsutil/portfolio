@@ -1,0 +1,35 @@
+---
+title: "Sharing React Components via CDN (PoC)"
+role: "Frontend Developer"
+year: 2025
+outcomeSummary: "Prototyped and proved a strategy to deliver shared React UI components directly via CDN, bypassing npm publishing bottlenecks and simplifying cross-team updates."
+overview: "A major organizational pain point across our microfrontend platform was component distribution friction: every foundational UI change required publishing a new npm package, updating every consuming app, and triggering full redeploys. We conducted a Proof of Concept (PoC) to determine if we could bypass npm entirely and deliver live components via CDN to existing React and legacy architectures."
+problem: "Strict deployment coupling. Updating a shared button or typography token across multiple microfrontends meant synchronized, manual version bumps and redeploys by separate teams, slowing down inter-team agility and feature velocity."
+constraints:
+  - "Must integrate natively with existing React microfrontends without requiring full framework rewrites."
+  - "Must be deliverable as a compiled JS script URL via a CDN, bypassing the npm registry."
+  - "Required a simple runtime delivery approach, avoiding complex federation architectures."
+  - "Must support legacy non-React applications."
+approach: "We initially tested exporting remote React components as native Web Components. However, passing complex props via vanilla JS proved too difficult, and this approach conflicted with existing company libraries. Ultimately, we adopted a strategy of importing pure React components directly from a CDN via script tags for the React apps. Later, we created a simplified Web Component wrapper specifically to support the legacy applications."
+keyDecisions:
+  - decision: "React Components over CDN"
+    reasoning: "To keep the architecture as simple and lightweight as possible, we manually bundled our React components and hosted them on a CDN. Consuming React applications linked the script and accessed the component globally, bypassing the npm update cycle without adding the overhead of complex remote build-tool architectures."
+  - decision: "Pivot away from Web Components for the React ecosystem"
+    reasoning: "Wrapping our complex React components in Custom Elements (Web Components) caused too much friction. Passing rich data structures as props through the DOM was difficult, and the vanilla JS wrapper conflicted directly with other internal React-based libraries. It was cleaner to keep React as React, rather than forcing a standard that wasn't native to the stack."
+  - decision: "Create a simplistic Web Component wrapper for legacy systems only"
+    reasoning: "While the primary solution was pure React, we still had legacy platforms that needed the new UI. For those specific cases, we wrapped a simplified version of the React component into a Custom Element, allowing older systems to consume it without adopting React."
+techStack:
+  - "React"
+  - "TypeScript"
+  - "Custom Elements API (Web Components)"
+  - "CDN Delivery"
+impact:
+  qualitative: "Validated an architectural pathway to decouple UI component updates from downstream consumer deployments. Core UI engineers could ship fixes to the CDN, and consuming React apps instantly received the updates. We also defined clear boundaries on when a Web Component wrapper is actually necessary (legacy apps) versus when it's an anti-pattern."
+learnings:
+  - "Sometimes the simplest delivery mechanism (a script tag on a CDN) is the best choice when the organization is looking for a solution with minimal architectural overhead."
+  - "Web Components sound like the perfect 'write once, run anywhere' solution, but forcing them into a React-heavy ecosystem often introduces more prop-passing complexity and library conflicts than they solve."
+  - "Providing an escape hatch (a simplistic Web Component version) is a pragmatic way to support legacy systems without compromising the developer experience of the modern stack."
+featured: true
+status: "completed"
+order: 4
+---

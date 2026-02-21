@@ -1,0 +1,38 @@
+---
+title: "Multi-tenant B2B User Management & Access Control"
+role: "Frontend Developer"
+year: 2025
+outcomeSummary: "Architected a frontend transition allowing users to manage multiple companies under a single email with role-based permissions, unlocking new B2B subscription tiers."
+overview: "I led the frontend implementation of a user identity update for a B2B platform. The goal was to move from legacy, isolated 'nick-based' accounts (where everyone had admin rights over one company) to a modern, email-based multi-tenant system where one identity could hold specific roles across multiple companies."
+problem: "Historically, users logged in with a 'nick', and 1 nick equaled 1 company. Also, every user had admin privileges because there was no concept of restricted roles like a marketing profile. As the platform grew, businesses needed granular access control, and the old architecture couldn't support users managing multiple companies under one identity."
+constraints:
+  - "The transition affected every microfrontend across the platform that displayed a login button or user name."
+  - "The backend handled core Keycloak rule enforcement, so the frontend needed a centralized validation library to interpret the new session states."
+  - "A direct release was impossible due to the scale of the legacy user base. The shift had to be gradual without breaking the old authentication for active sessions."
+approach: "Working alongside backend and security teams, we built the user management interfaces (registration wizard, login, role assignment) as a central microfrontend using Astro and React. We also developed an internal JavaScript library to centralize auth validation and Keycloak communication. This library exported standard 'User Profile' and 'Login' components that were injected across all other microfrontends, creating a single source of truth for the platform's authentication state."
+keyDecisions:
+  - decision: "Abstracting Auth into an internal package"
+    reasoning: "Instead of copying login state logic across many microfrontends, we grouped authentication validation, Keycloak calls, and the UI components into one internal library. This guaranteed that future security changes only needed to happen in one place."
+  - decision: "Atoms for local React state, Astro for everything else"
+    reasoning: "For state that needed to be shared within the boundaries of a specific React application (like the multi-step registration wizard), we used the company's internal Atom-based library. This provided a clean state model for isolated features without needing to persist data between page reloads or across independent Astro islands."
+  - decision: "Gradual, sequential rollout strategy"
+    reasoning: "Given the scale of migrating the authentication system, the architecture was deployed in continuous phases to active production without breaking legacy sessions."
+techStack:
+  - "Astro"
+  - "React"
+  - "TypeScript"
+  - "Internal Atom-based State Management"
+  - "Keycloak (Auth integration)"
+  - "Tailwind CSS"
+impact:
+  qualitative: "The identity shift from '1 nick = 1 company' to '1 email = multiple companies with specific roles' improved the platform. This new architecture allowed the business to create and sell new subscription plans based on how many roles or companies a user needed to manage."
+learnings:
+  - "Microfrontends work well when boundaries are clear, but authentication crosses boundaries. Centralizing auth UI and validation logic into an internal library was the best path."
+  - "A phased structural rollout, deploying identity pieces one by one to production, reduces the risk of migrating legacy authentication flows."
+  - "While the backend (Keycloak) held the ultimate truth, standardizing how the frontend interpreted and reacted to those claims was just as important for a cohesive user experience."
+featured: true
+status: "completed"
+order: 1
+---
+
+

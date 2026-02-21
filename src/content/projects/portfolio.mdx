@@ -1,0 +1,47 @@
+---
+title: "Personal Portfolio & Case Study Platform"
+role: "Frontend Developer"
+year: 2026
+outcomeSummary: "A high-performance, accessible portfolio built to demonstrate real-world development thinking and AI-assisted workflow velocity."
+overview: "This project isn't just a list of links; it's a demonstration of how I approach modern web development. It was born from the need to synthesize my 9 years of experience into a format that proves technical capability through performance, accessibility, and architectural transparency."
+problem: "Most portfolios focus on visuals but fail on core metrics like performance and accessibility. They also rarely show the 'how' behind technical decisions. I needed a platform that serves as its own case study, speaking directly to technical recruiters and peers."
+constraints:
+  - "Must ship zero JavaScript by default for maximum performance."
+  - "Must achieve 100/100 Accessibility score on Lighthouse (via Keyboard Nav, Landmarks, Contrast)."
+  - "Must support typed content collections for structured case studies."
+  - "Must demonstrate professional use of AI tools under meticulous supervision."
+approach: "Built with Astro for its static-first architecture. It remains pure HTML/CSS for 95% of its surface area, selectively hydrating only complex components like the interactive hero carousel. Employs a comprehensive End-to-End testing strategy (Playwright) and an AI-assisted workflow for rapid iteration."
+keyDecisions:
+  - decision: "Astro over Next.js"
+    reasoning: "Next.js ships a React runtime to every page. For a content-heavy site, this overhead is unnecessary. Astro's zero-JS-by-default behavior fits the 'Performance as a Feature' requirement perfectly."
+  - decision: "Islands Architecture for Interactivity"
+    reasoning: "The hero carousel requires state management. Using a React island allows rich interactivity without taxing the rest of the page's initial load time."
+  - decision: "End-to-End Testing Strategy"
+    reasoning: "Unit testing React components inside an Astro environment introduces unnecessary complexity (ESM vs CommonJS errors). Playwright automates real-browser interactions to verify the compiled output, catching accessibility traps and broken critical user flows with high fidelity."
+  - decision: "AI-Assisted Workflow"
+    reasoning: "Using advanced AI coding agents allowed for rapid prototyping of boilerplate and layout patterns. My role shifted to technical direction, architectural constraints, and performance auditing."
+  - decision: "Vanilla CSS over Tailwind"
+    reasoning: "Astro's scoped styles provide modularity without abstraction overhead. CSS variables and local scoping offered more precise control with zero runtime cost."
+techStack:
+  - "Astro"
+  - "React"
+  - "TypeScript"
+  - "MDX"
+  - "Playwright (E2E)"
+impact:
+  metrics:
+    - label: "Lighthouse A11y"
+      value: "100"
+    - label: "Core Web Vitals"
+      value: "Passed"
+    - label: "Development Speed"
+      value: "Faster"
+  qualitative: "Created a professional synthesis of knowledge that serves as a direct technical credential for recruiters and peers, highlighting the intersection of solid UX and modern AI tooling."
+learnings:
+  - "Selective hydration is extremely powerful for portfolio sites to maintain near-instant load times."
+  - "AI engineering requires more architectural rigor and supervision, not less."
+  - "An A11y-first development mindset improves overall semantic code structure from the start."
+featured: true
+isMeta: true
+order: 0
+---

@@ -1,0 +1,38 @@
+---
+title: "B2B Company Registration: A/B Redesign"
+role: "Frontend Developer"
+year: 2025
+outcomeSummary: "Rebuilt the company registration flow as a microfrontend utilizing an established design system. Validated via an Unleash A/B test, outperforming the original flow by reducing drop-offs."
+overview: "Collaborating with product and backend teams, I led the frontend development to rebuild a high-friction company registration flow into a new microfrontend utilizing the company's existing Storybook design system. Before promoting it to production, we validated the new flow against the original using an A/B test managed by Unleash. The challenge was reducing friction in a multi-step funnel without breaking the existing user flow or losing business data."
+problem: "The legacy registration flow had unnecessary steps that caused drop-offs before companies completed their profiles. Beyond the UX problems, the monolith codebase was difficult to maintain and didn't align with the component patterns being established for new B2B products."
+constraints:
+  - "Had to run in parallel with the live flow during the A/B test: not a direct replacement."
+  - "Performance and conversion rates of the new flow had to be measurably better than the legacy one to justify the change."
+approach: "We rebuilt the registration flow as a standalone microfrontend, cutting friction by removing unnecessary steps. The UI heavily consumed the company's official shared design system (Storybook), allowing for rapid prototyping. We deployed both versions simultaneously, using Unleash to route part of the traffic to the old flow and part to the new one. Once the new version showed a clear conversion advantage, it became the official flow."
+keyDecisions:
+  - decision: "A/B test via Unleash instead of direct cutover"
+    reasoning: "Registration is a critical conversion point. Instead of assuming the new design was better, we used Unleash to route real traffic and let the data decide, mitigating the risk of a direct replacement."
+  - decision: "Microfrontend architecture and established components"
+    reasoning: "Building independently from the monolith allowed faster iteration. Reusing the official Storybook components meant we didn't have to rebuild UI elements from scratch, keeping the focus entirely on the business logic and user flow."
+  - decision: "Tailwind CSS paired with Cursor AI for styling"
+    reasoning: "Since Tailwind was already the official standard for the design system, utilizing it alongside AI tools like Cursor allowed for incredibly rapid iteration and UI assembly, letting us build and adjust layouts at high velocity."
+techStack:
+  - "React"
+  - "TypeScript"
+  - "Astro"
+  - "Tailwind CSS"
+  - "Storybook"
+  - "Unleash (A/B Testing)"
+  - "Cursor AI"
+  - "Jest"
+  - "React Testing Library"
+impact:
+  qualitative: "The Unleash A/B test validated the new flow with real conversion data. Once promoted, organic company registrations increased due to a simplified funnel. Because this is a critical onboarding step, we also established and maintained high unit test coverage to ensure long-term stability."
+learnings:
+  - "A/B testing a multi-step registration flow is complex because the conversion event is delayed, but that complexity is exactly why routing actual user data matters more than assumptions."
+  - "Having an established, well-documented design system (Storybook) available completely changes the pace of development, reducing UI bottlenecks and shifting focus back to user value."
+  - "Simpler flows convert better. Removing steps we thought were 'necessary' turned out to be the most impactful UX change."
+featured: true
+status: "completed"
+order: 2
+---

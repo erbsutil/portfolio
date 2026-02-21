@@ -1,0 +1,36 @@
+---
+title: "B2B Brand Customization"
+role: "Frontend Developer"
+year: 2022
+outcomeSummary: "Improved the brand customization experience for businesses, giving them more autonomy and better tools to organize their profile pages, including image editing and video integration."
+overview: "I contributed to a high-traffic consumer platform, evolving the brand customization experience to give company administrators more autonomy and better tools for identity management."
+problem: "Existing customization was limited, preventing companies with great service from standing out. We needed a self-service system simple enough for non-technical users."
+constraints:
+  - "The page is public-facing and high-traffic, so any change had to be performant"
+  - "Had to work within an existing monolithic frontend codebase"
+  - "UX needed to be simple enough for non-technical company admins to use"
+approach: "Refactored the profile editor to include custom cover cropping, Unsplash integration, and video support. Migrated from prop-drilling to Context API for better state management."
+keyDecisions:
+  - decision: "Context API for data flow"
+    reasoning: "Prop-drilling became unmanageable. Context API provided a clean way to organize editor state at the time."
+  - decision: "Unsplash API & Cropping Tool"
+    reasoning: "To offer a premium image library and ensure pixel-perfect cover alignment."
+  - decision: "Styled Components from Figma"
+    reasoning: "Ensured visual fidelity by translating Figma (DevMode) specifications directly into CSS-in-JS."
+techStack:
+  - "React"
+  - "TypeScript"
+  - "Context API"
+  - "Styled Components"
+  - "Unsplash API"
+  - "Figma"
+impact:
+  qualitative: "Increased business autonomy and better brand differentiation for millions of platform users."
+learnings:
+  - "This project solidified my foundations in React, specifically in handling complex states and modern CSS-in-JS."
+featured: true
+status: "completed"
+order: 1
+---
+
+

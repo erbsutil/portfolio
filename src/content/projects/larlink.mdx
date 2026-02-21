@@ -1,0 +1,40 @@
+---
+title: "Larlink — AI Agents for Real Estate"
+role: "Product & Architecture"
+year: 2025
+status: "ongoing"
+duration: "Ongoing"
+outcomeSummary: "Engineered core orchestration flows and a custom human-handoff dashboard for an AI real estate platform that automates WhatsApp lead qualification."
+overview: "Larlink is a B2B SaaS for real estate agencies serving as a complete AI pipeline. It autonomously manages multi-modal WhatsApp conversations to qualify leads, fetches matching properties using semantic vector search, and delivers structured client profiles to human agents. Working collaboratively, I took charge of refining the Windmill orchestration logic and leveraging my frontend expertise to build a custom React dashboard for seamless human-AI handoff."
+problem: "Real estate agents waste many hours daily answering repetitive early-stage questions about budget, location, and timeline. This manual bottleneck delays response times and prevents agents from focusing on high-value closing negotiations."
+constraints:
+  - "The system had to operate entirely through WhatsApp without imposing any app downloads or friction on the buyer."
+  - "Conversational AI responses needed to feel natural, intelligent, and context-aware."
+  - "Human agents needed a way to monitor the AI and instantly take control of the conversation when a lead was hot."
+approach: "The platform relies on Windmill for backend orchestration, Gemini AI for natural language, and Supabase (pgvector) for semantic matching. My primary focus was architecting the conversational AI flows in Windmill and developing the human-handoff experience. Combining AI development tools with my frontend background, I built a custom React dashboard featuring a WhatsApp-like interface. This connects directly to Windmill APIs, empowering agents to monitor chats in real-time and effortlessly take over when a lead is ready."
+keyDecisions:
+  - decision: "Windmill as the central orchestrator"
+    reasoning: "Windmill centralizes all the backend logic, scheduled tasks, and API endpoints. When a human agent replies via the dashboard, it calls a generic Windmill function that hits the Meta WhatsApp API. This orchestration was much more flexible and scalable than alternatives we tested, like n8n."
+  - decision: "Gemini AI with explicit 'Tool Calling'"
+    reasoning: "Instead of hardcoding what the bot should say next, we gave the AI 'tools'. Based on the conversation, the AI dynamically decides whether it should just reply naturally or trigger a 'search_property' tool to look up inventory. This makes the conversation feel organic rather than like a rigid phone tree."
+  - decision: "Two-stage property matching (pgvector + AI filtering)"
+    reasoning: "The system utilizes Supabase semantic search to find conceptually close properties (e.g., matching 'quiet place' with 'low noise index'). Then, the AI agent performs a second pass to filter those results, ensuring only the absolute best matches are presented to the user."
+  - decision: "Custom Dashboard for Human Handoff"
+    reasoning: "We couldn't just automate everything; sales require a human touch. The custom dashboard lists all active AI and client interactions. If an agent hits 'reply', Windmill instantly pauses the AI and routes the human's message directly to the client's WhatsApp."
+techStack:
+  - "Windmill"
+  - "Gemini AI"
+  - "Supabase (pgvector)"
+  - "TypeScript"
+  - "WhatsApp API (Meta)"
+  - "React / Next.js"
+impact:
+  qualitative: "The platform completely streamlines lead qualification by providing 24/7 instant responses based on actual inventory. When human agents step in using the custom dashboard, they already have a structured summary of the client's budget and preferences. Industry data shows that conversational AI can improve lead qualification conversion by up to 40%, and this architecture positions agencies to capture that value without losing the personal touch."
+learnings:
+  - "We initially tested n8n for orchestration, but ultimately chose Windmill. Windmill's code-first approach offered the flexibility and scalability required for complex AI state management."
+  - "Semantic search (pgvector) combined with a final AI filtering pass yields better property recommendations than traditional keyword database queries."
+  - "In B2B SaaS, the 'human handoff' mechanism is just as critical as the AI itself. Building a familiar, WhatsApp-like UI for the agents ensured high adoption of the monitoring dashboard."
+featured: true
+order: 3
+relatedProjects: []
+---
