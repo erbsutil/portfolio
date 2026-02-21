@@ -38,7 +38,7 @@ import StructuredData from "../../components/StructuredData.astro";
 import ScrollToTop from "../../components/ScrollToTop.astro";
 import BackLink from "../../components/BackLink.astro";
 import RelatedContent from "../../components/RelatedContent.astro";
-import ImpactMetrics from "../../components/ImpactMetrics.astro";
+import MetricVisualization from "../../components/MetricVisualization.astro";
 import { getCollection, getEntry, render } from "astro:content";
 import {
   calculateReadingTime,
@@ -94,6 +94,7 @@ const {
   relatedProjects,
 
   status,
+  isMeta,
 } = project.data;
 
 // Status display configuration
@@ -149,6 +150,11 @@ const readingTime = formatReadingTime(calculateReadingTime(allText));
     <!-- Case Study Header -->
     <header class="case-study-header">
       <div class="header-badges">
+        {
+          isMeta && (
+            <span class="status-badge status--featured">Featured Case</span>
+          )
+        }
         {
           status && status !== "completed" && (
             <span class:list={["status-badge", statusInfo.class]}>
@@ -255,7 +261,11 @@ const readingTime = formatReadingTime(calculateReadingTime(allText));
       {/* Display metrics with visualization */}
       {
         impact.metrics && impact.metrics.length > 0 && (
-          <ImpactMetrics metrics={impact.metrics} />
+          <MetricVisualization
+            metrics={impact.metrics}
+            auditSource={impact.auditSource}
+            auditDate={impact.auditDate}
+          />
         )
       }
 
@@ -317,6 +327,12 @@ const readingTime = formatReadingTime(calculateReadingTime(allText));
       letter-spacing: 0.05em;
       padding: 0.3rem 0.625rem;
       border-radius: 4px;
+    }
+
+    .status--featured {
+      background: rgba(99, 102, 241, 0.1);
+      color: var(--color-accent);
+      border: 1px solid var(--color-accent);
     }
 
     .status--ongoing {

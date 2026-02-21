@@ -39,6 +39,8 @@ const projectsCollection = defineCollection({
         value: z.string(),
       })).optional(),
       qualitative: z.string(),
+      auditSource: z.string().optional(),
+      auditDate: z.string().optional(),
     }),
     learnings: z.array(z.string()),
     featured: z.boolean().default(false),

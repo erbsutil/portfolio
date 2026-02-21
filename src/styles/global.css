@@ -21,9 +21,12 @@
   --gradient-card: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
   --gradient-border: linear-gradient(135deg, rgba(59, 130, 246, 0.5) 0%, rgba(139, 92, 246, 0.5) 100%);
   
-  /* Status Colors */
+  /* Status & Rating Colors */
   --color-status-ongoing: #6366f1;
   --color-status-archived: #737373;
+  --color-rating-high: #00cc66;    /* Lighthouse Green */
+  --color-rating-medium: #ffa400;  /* Lighthouse Orange */
+  --color-rating-low: #ff4e42;     /* Lighthouse Red */
   
   /* Spacing System */
   --space-xs: 0.25rem;    /* 4px */
