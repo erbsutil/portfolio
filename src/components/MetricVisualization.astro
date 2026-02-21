@@ -1,11 +1,11 @@
 ---
 /**
  * MetricVisualization Component
- * 
+ *
  * A premium visualization component for project metrics.
  * Supports both circular PageSpeed-style indicators for scores (e.g., "100/100")
  * and standard text-based metrics.
- * 
+ *
  * Features:
  * - Dynamic detection of Lighthouse-style scores
  * - Circular SVG progress bars with color-coding (Green/Orange/Red)
@@ -35,7 +35,7 @@ function parseScore(value: string) {
   if (match) {
     return {
       score: parseInt(match[1]),
-      total: parseInt(match[2])
+      total: parseInt(match[2]),
     };
   }
   return null;
@@ -45,84 +45,129 @@ function parseScore(value: string) {
  * Returns the CSS variable for the rating color based on score percentage
  */
 function getRatingColor(percentage: number) {
-  if (percentage >= 90) return 'var(--color-rating-high)';
-  if (percentage >= 50) return 'var(--color-rating-medium)';
-  return 'var(--color-rating-low)';
+  if (percentage >= 90) return "var(--color-rating-high)";
+  if (percentage >= 50) return "var(--color-rating-medium)";
+  return "var(--color-rating-low)";
 }
 ---
 
-<div class="metrics-grid">
-  {metrics.map((metric) => {
-    const scoreData = parseScore(metric.value);
-    
-    if (scoreData) {
-      const percentage = (scoreData.score / scoreData.total) * 100;
-      const radius = 34;
-      const circumference = 2 * Math.PI * radius;
-      const offset = circumference - (percentage / 100) * circumference;
-      const color = getRatingColor(percentage);
+<div class="metrics-container">
+  <div class="metrics-grid">
+    <div class="scores-row">
+      {
+        metrics
+          .filter((m) => parseScore(m.value))
+          .map((metric) => {
+            const scoreData = parseScore(metric.value)!;
+            const percentage = (scoreData.score / scoreData.total) * 100;
+            const radius = 34;
+            const circumference = 2 * Math.PI * radius;
+            const offset = circumference - (percentage / 100) * circumference;
+            const color = getRatingColor(percentage);
 
-      return (
-        <div class="metric-visual">
-          <div class="score-circle-wrapper">
-            <svg class="score-circle" viewBox="0 0 80 80">
-              <!-- Background Track -->
-              <circle 
-                class="circle-track" 
-                cx="40" cy="40" r={radius} 
-                fill="none" 
-                stroke="var(--color-border)" 
-                stroke-width="5"
-              />
-              <!-- Progress Bar -->
-              <circle 
-                class="circle-progress" 
-                cx="40" cy="40" r={radius} 
-                fill="none" 
-                stroke={color} 
-                stroke-width="5"
-                stroke-dasharray={circumference}
-                stroke-dashoffset={offset}
-                stroke-linecap="round"
-                transform="rotate(-90 40 40)"
-              />
-            </svg>
-            <div class="score-value" style={`color: ${color}`}>
-              {scoreData.score}
-            </div>
-          </div>
-          <div class="metric-label">{metric.label}</div>
-        </div>
-      );
-    }
-
-    return (
-      <div class="metric-text">
-        <div class="metric-value">{metric.value}</div>
-        <div class="metric-label">{metric.label}</div>
-      </div>
-    );
-  })}
-  
-  { (auditSource || auditDate) && (
-    <div class="metrics-footer">
-      {auditSource && <span class="audit-source">Source: {auditSource}</span>}
-      {auditSource && auditDate && <span class="audit-separator">·</span>}
-      {auditDate && <span class="audit-date">Date: {auditDate}</span>}
+            return (
+              <div class="metric-visual">
+                <div class="score-circle-wrapper">
+                  <svg class="score-circle" viewBox="0 0 80 80">
+                    <circle
+                      class="circle-track"
+                      cx="40"
+                      cy="40"
+                      r={radius}
+                      fill="none"
+                      stroke="var(--color-border)"
+                      stroke-width="5"
+                    />
+                    <circle
+                      class="circle-progress"
+                      cx="40"
+                      cy="40"
+                      r={radius}
+                      fill="none"
+                      stroke={color}
+                      stroke-width="5"
+                      stroke-dasharray={circumference}
+                      stroke-dashoffset={offset}
+                      stroke-linecap="round"
+                      transform="rotate(-90 40 40)"
+                    />
+                  </svg>
+                  <div class="score-value" style={`color: ${color}`}>
+                    {scoreData.score}
+                  </div>
+                </div>
+                <div class="metric-label">{metric.label}</div>
+              </div>
+            );
+          })
+      }
     </div>
-  )}
+
+    {
+      metrics.filter((m) => !parseScore(m.value)).length > 0 && (
+        <div class="text-metrics-row">
+          {metrics
+            .filter((m) => !parseScore(m.value))
+            .map((metric) => (
+              <div class="metric-text">
+                <div class="metric-value">{metric.value}</div>
+                <div class="metric-label">{metric.label}</div>
+              </div>
+            ))}
+        </div>
+      )
+    }
+  </div>
+
+  {
+    (auditSource || auditDate) && (
+      <div class="metrics-footer">
+        <div class="footer-info">
+          {auditSource && (
+            <span class="audit-source">
+              <strong>Verification:</strong> {auditSource}
+            </span>
+          )}
+          {auditDate && (
+            <span class="audit-date">
+              <strong>Date:</strong> {auditDate}
+            </span>
+          )}
+        </div>
+      </div>
+    )
+  }
 </div>
 
 <style>
-  .metrics-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 2rem;
-    padding: 2rem;
+  .metrics-container {
     background: var(--color-bg-secondary);
     border: 1px solid var(--color-border);
     border-radius: 12px;
+    padding: 2.5rem 2rem;
     margin-bottom: 2rem;
+  }
+
+  .metrics-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+  }
+
+  .scores-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 1.5rem;
+    width: 100%;
+  }
+
+  .text-metrics-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px dashed var(--color-border);
+    justify-content: center;
   }
 
   /* Score Visualization */
@@ -185,35 +230,71 @@ function getRatingColor(percentage: number) {
   }
 
   .metrics-footer {
-    grid-column: 1 / -1;
     display: flex;
     justify-content: center;
-    gap: 0.75rem;
-    margin-top: 1rem;
+    margin-top: 2rem;
     padding-top: 1.5rem;
     border-top: 1px solid var(--color-border);
-    font-size: 0.75rem;
-    color: var(--color-text-muted);
-    opacity: 0.8;
   }
 
-  .audit-separator {
-    opacity: 0.5;
+  .footer-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    text-align: center;
+    max-width: 500px;
+  }
+
+  .audit-source,
+  .audit-date {
+    font-size: 0.8125rem;
+    color: var(--color-text-muted);
+    line-height: 1.4;
+  }
+
+  .audit-source strong,
+  .audit-date strong {
+    color: var(--color-text-secondary);
+    font-weight: 600;
   }
 
   @media (max-width: 600px) {
-    .metrics-grid {
-      grid-template-columns: repeat(2, 1fr);
-      gap: 1.5rem;
-      padding: 1.5rem;
+    .metrics-container {
+      padding: 2rem 1.25rem;
     }
-    
+
+    .scores-row {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem 1rem;
+    }
+
+    .metric-visual {
+      gap: 0.75rem;
+    }
+
+    .score-circle-wrapper {
+      width: 70px;
+      height: 70px;
+    }
+
+    .score-value {
+      font-size: 1.25rem;
+    }
+
+    .text-metrics-row {
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
     .metric-text {
-      grid-column: span 2;
       align-items: center;
       text-align: center;
-      border-top: 1px solid var(--color-border);
-      padding-top: 1.5rem;
+    }
+
+    .footer-info {
+      gap: 0.75rem;
     }
   }
 

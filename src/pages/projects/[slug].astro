@@ -151,7 +151,7 @@ const readingTime = formatReadingTime(calculateReadingTime(allText));
     <header class="case-study-header">
       <div class="header-badges">
         {
-          isMeta && (
+          isMeta === true && (
             <span class="status-badge status--featured">Featured Case</span>
           )
         }
