@@ -72,3 +72,8 @@ playwright/.cache/
 # Vercel
 .vercel/
 
+
+# Lighthouse reports
+lh-report*
+*.report.json
+*.report.html
