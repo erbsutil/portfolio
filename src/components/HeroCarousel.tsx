@@ -136,11 +136,13 @@ export default function HeroCarousel({ items = [], interval = 12000 }: HeroCarou
         }
         
         .hero-carousel-viewport {
-          height: 380px; /* Tightened from 440px for better vertical balance */
+          height: 388px; /* Increased by 8px (4px top/bottom padding) */
           display: flex;
           flex-direction: column;
           position: relative;
           overflow: visible;
+          padding: 4px 0; /* Give room for hover transform */
+          margin: -4px 0; /* Offset padding to maintain visual alignment */
         }
 
         .hero-carousel-list {
@@ -149,6 +151,7 @@ export default function HeroCarousel({ items = [], interval = 12000 }: HeroCarou
           gap: 0.875rem;
           opacity: 1;
           transition: opacity 300ms ease-in-out;
+          padding: 4px 0; /* Room for cards to jump */
         }
         
         .hero-carousel-list.fading {
