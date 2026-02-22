@@ -134,7 +134,7 @@ export default function HeroCarousel({ items = [], interval = 12000 }: HeroCarou
         }
         
         .hero-carousel-viewport {
-          height: 440px; /* Tighter fixed height */
+          height: 380px; /* Tightened from 440px for better vertical balance */
           display: flex;
           flex-direction: column;
           position: relative;
@@ -297,7 +297,7 @@ export default function HeroCarousel({ items = [], interval = 12000 }: HeroCarou
           }
           .hero-carousel-nav {
             justify-content: center;
-            margin-top: 0.5rem;
+            margin-top: 0.25rem; /* Even tighter spacing for mobile */
           }
         }
       `}</style>
