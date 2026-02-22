@@ -129,20 +129,22 @@ export default function HeroCarousel({ items = [], interval = 12000 }: HeroCarou
       <style>{`
         .hero-carousel-container {
           position: relative;
-          padding-bottom: 2.5rem; /* Space for fixed nav */
+          display: flex;
+          flex-direction: column;
         }
         
         .hero-carousel-viewport {
-          height: 420px; /* Tighter fixed height */
+          height: 440px; /* Tighter fixed height */
           display: flex;
           flex-direction: column;
           position: relative;
+          overflow: visible;
         }
 
         .hero-carousel-list {
           display: flex;
           flex-direction: column;
-          gap: 0.875rem; /* Tighter gap */
+          gap: 0.875rem;
           opacity: 1;
           transition: opacity 300ms ease-in-out;
         }
@@ -159,7 +161,7 @@ export default function HeroCarousel({ items = [], interval = 12000 }: HeroCarou
           border-radius: 8px;
           text-decoration: none;
           color: inherit;
-          min-height: 170px; /* Stable min-height */
+          min-height: 160px;
           height: auto;
           outline: none;
           transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
@@ -210,8 +212,8 @@ export default function HeroCarousel({ items = [], interval = 12000 }: HeroCarou
           font-size: 1.125rem;
           font-weight: 600;
           color: var(--color-text);
-          margin-bottom: 0.5rem;
-          line-height: 1.4;
+          margin-bottom: 0.4rem;
+          line-height: 1.3;
         }
 
         .card-description {
@@ -224,22 +226,20 @@ export default function HeroCarousel({ items = [], interval = 12000 }: HeroCarou
           line-height: 1.5;
         }
 
-        /* Navigation - Anchored Bottom Right */
+        /* Navigation - Flex Flow */
         .hero-carousel-nav {
-          position: absolute;
-          bottom: 0;
-          right: 0;
           display: flex;
           align-items: center;
+          justify-content: flex-end;
           gap: 1.25rem;
-          height: 2rem;
+          height: 3rem;
+          margin-top: 0.5rem;
         }
 
         .carousel-btn {
           background: none;
           border: none;
-          padding: 0.5rem; /* Increased hit area */
-          margin: -0.5rem; /* Compensate padding for alignment */
+          padding: 0.5rem;
           color: var(--color-text-muted);
           cursor: pointer;
           display: flex;
@@ -251,7 +251,7 @@ export default function HeroCarousel({ items = [], interval = 12000 }: HeroCarou
 
         .carousel-btn:hover {
           opacity: 1;
-          color: var(--color-text-muted); /* Match grounded gray tone */
+          color: var(--color-text-muted);
           transform: scale(1.1);
         }
 
@@ -267,7 +267,7 @@ export default function HeroCarousel({ items = [], interval = 12000 }: HeroCarou
         }
 
         .carousel-dot-indicator {
-          font-size: 0.875rem; /* 14px for better A11y */
+          font-size: 0.875rem;
           color: var(--color-text-muted);
           font-variant-numeric: tabular-nums;
           letter-spacing: 0.05em;
@@ -277,16 +277,27 @@ export default function HeroCarousel({ items = [], interval = 12000 }: HeroCarou
 
         @media (max-width: 768px) {
           .hero-carousel-viewport {
-            height: 380px; /* Reduced to fix large margin */
+            height: 354px; /* Perfectly fits 2 cards (170px each) + gap (14px) */
+            margin-bottom: 0.5rem;
           }
-          .case-title {
+          .hero-carousel-card {
+            height: 170px;
+            padding: 1rem 1.25rem;
+          }
+          .card-title {
             font-size: 1rem;
+            -webkit-line-clamp: 2;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+          }
+          .card-description {
+            -webkit-line-clamp: 2;
+            font-size: 0.875rem;
           }
           .hero-carousel-nav {
-            right: auto;
-            left: 50%;
-            transform: translateX(-50%);
-            padding-right: 0;
+            justify-content: center;
+            margin-top: 0.5rem;
           }
         }
       `}</style>
