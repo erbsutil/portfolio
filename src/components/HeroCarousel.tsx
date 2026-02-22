@@ -131,8 +131,8 @@ export default function HeroCarousel({ items = [], interval = 12000 }: HeroCarou
           position: relative;
           display: flex;
           flex-direction: column;
-          /* Containment to prevent any layout shifts from affecting outer page */
-          contain: paint layout;
+          /* Layout containment to prevent shifts, allowing paint overflow for hover effects */
+          contain: layout style;
         }
         
         .hero-carousel-viewport {
