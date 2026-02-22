@@ -131,6 +131,8 @@ export default function HeroCarousel({ items = [], interval = 12000 }: HeroCarou
           position: relative;
           display: flex;
           flex-direction: column;
+          /* Containment to prevent any layout shifts from affecting outer page */
+          contain: paint layout;
         }
         
         .hero-carousel-viewport {
@@ -216,7 +218,6 @@ export default function HeroCarousel({ items = [], interval = 12000 }: HeroCarou
           color: var(--color-text);
           margin-bottom: 0.4rem;
           line-height: 1.3;
-          min-height: 2.6em; /* Ensure stable title height */
         }
 
         .card-description {

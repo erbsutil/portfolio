@@ -150,5 +150,15 @@ export default defineConfig({
       theme: 'github-dark',
       wrap: true
     }
+  },
+
+  /**
+   * Build configuration
+   * 
+   * inlineStylesheets: 'always' ensures that small CSS files are inlined
+   * directly into the HTML to avoid render-blocking network requests.
+   */
+  build: {
+    inlineStylesheets: 'always'
   }
 });
