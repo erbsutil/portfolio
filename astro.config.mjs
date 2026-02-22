@@ -73,7 +73,7 @@ export default defineConfig({
    * 
    * Set SITE_URL in your .env file (e.g., https://example.com)
    */
-  site: SITE_URL || 'https://ericksutil.vercel.app',
+  site: SITE_URL || 'https://erbsu.com',
 
   /**
    * Environment variables schema (Astro v5+)
@@ -89,7 +89,7 @@ export default defineConfig({
   env: {
     schema: {
       // Site configuration
-      SITE_URL: envField.string({ context: 'client', access: 'public', default: 'https://ericksutil.vercel.app' }),
+      SITE_URL: envField.string({ context: 'client', access: 'public', default: 'https://erbsu.com' }),
       SITE_LANGUAGE: envField.string({ context: 'client', access: 'public', default: 'en' }),
       SITE_TITLE: envField.string({ context: 'client', access: 'public', default: 'Erick Sutil — Frontend Developer' }),
       SITE_DESCRIPTION: envField.string({ context: 'client', access: 'public', default: 'Frontend developer with 9 years of experience building performant web applications and pragmatic architectures.' }),

@@ -48,7 +48,7 @@ export const siteConfig = {
    * Should be the full production URL without trailing slash.
    * Example: 'https://example.com'
    */
-  url: getEnv('SITE_URL', 'https://example.com'),
+  url: getEnv('SITE_URL', 'https://erbsu.com'),
   
   /**
    * Site language (ISO 639-1 code)
@@ -63,14 +63,14 @@ export const siteConfig = {
    * 
    * Used as fallback when page-specific title is not provided.
    */
-  title: getEnv('SITE_TITLE', 'Professional Portfolio'),
+  title: getEnv('SITE_TITLE', 'Erick Sutil — Frontend Developer'),
   
   /**
    * Site description
    * 
    * Default meta description for SEO and social sharing.
    */
-  description: getEnv('SITE_DESCRIPTION', 'Engineering leader specializing in system architecture, technical decision-making, and delivering measurable business impact.'),
+  description: getEnv('SITE_DESCRIPTION', 'Frontend developer with 9 years of experience building performant web applications and pragmatic architectures.'),
   
   /**
    * Author information
@@ -80,7 +80,7 @@ export const siteConfig = {
    */
   author: {
     /** Full name */
-    name: getEnv('SITE_AUTHOR_NAME', 'Your Name'),
+    name: getEnv('SITE_AUTHOR_NAME', 'Erick Sutil'),
     
     /** Professional title or role */
     title: getEnv('SITE_AUTHOR_TITLE', 'Frontend Developer'),
@@ -89,7 +89,7 @@ export const siteConfig = {
     bio: getEnv('SITE_AUTHOR_BIO', 'Frontend developer with 9 years of experience building performant web applications and pragmatic architectures.'),
     
     /** Contact email address */
-    email: getEnv('SITE_AUTHOR_EMAIL', 'hello@example.com'),
+    email: getEnv('SITE_AUTHOR_EMAIL', 'erbsutil@gmail.com'),
     
     /** Location (optional, empty string to hide) */
     location: getEnv('SITE_AUTHOR_LOCATION', ''),
