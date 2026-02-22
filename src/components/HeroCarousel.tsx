@@ -161,8 +161,7 @@ export default function HeroCarousel({ items = [], interval = 12000 }: HeroCarou
           border-radius: 8px;
           text-decoration: none;
           color: inherit;
-          min-height: 160px;
-          height: auto;
+          height: 180px; /* Standardized height for desktop cards */
           outline: none;
           transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
           cursor: pointer;
@@ -208,17 +207,21 @@ export default function HeroCarousel({ items = [], interval = 12000 }: HeroCarou
         }
         
         .card-title {
-          display: block;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
           font-size: 1.125rem;
           font-weight: 600;
           color: var(--color-text);
           margin-bottom: 0.4rem;
           line-height: 1.3;
+          min-height: 2.6em; /* Ensure stable title height */
         }
 
         .card-description {
           display: -webkit-box;
-          -webkit-line-clamp: 3;
+          -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
           overflow: hidden;
           font-size: 0.9375rem;
