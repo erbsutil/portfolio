@@ -1,11 +1,11 @@
 ---
 /**
  * Speaking Page
- * 
+ *
  * Lists all speaking engagements including conferences, meetups, podcasts, workshops,
  * and webinars. Organizes talks by year in reverse chronological order, with each year
  * displaying its talks sorted by date (most recent first).
- * 
+ *
  * Features:
  * - Queries all speaking entries from content collection
  * - Sorts by date (descending - most recent first)
@@ -14,33 +14,33 @@
  * - Color-coded badges by talk type
  * - Links to slides and video recordings when available
  * - Empty state handling
- * 
+ *
  * Talk Types:
  * - conference: Conference presentations
  * - meetup: Local meetup talks
  * - podcast: Podcast appearances
  * - workshop: Hands-on workshops
  * - webinar: Online webinars
- * 
+ *
  * Route: /speaking
- * 
+ *
  * @page
  */
 
-import BaseLayout from '../layouts/BaseLayout.astro';
-import SEO from '../components/SEO.astro';
-import TalkCard from '../components/TalkCard.astro';
-import { getCollection } from 'astro:content';
-import { pagesConfig } from '../pages.config';
+import BaseLayout from "../layouts/BaseLayout.astro";
+import SEO from "../components/SEO.astro";
+import TalkCard from "../components/TalkCard.astro";
+import { getCollection } from "astro:content";
+import { pagesConfig } from "../pages.config";
 
 /**
  * Queries all speaking entries from the content collection
  */
-const allTalks = await getCollection('speaking');
+const allTalks = await getCollection("speaking");
 
 /**
  * Sorts talks by date in descending order (most recent first)
- * 
+ *
  * Ensures the latest speaking engagements appear at the top of each year section.
  */
 const sortedTalks = allTalks.sort((a, b) => {
@@ -49,35 +49,36 @@ const sortedTalks = allTalks.sort((a, b) => {
 
 /**
  * Groups talks by year for organized display
- * 
+ *
  * Creates a record object where keys are years and values are arrays of talks
  * from that year. This enables year-based section headers in the UI.
- * 
+ *
  * @returns Record with year as key and array of talks as value
  */
-const talksByYear = sortedTalks.reduce((acc, talk) => {
-  const year = talk.data.date.getFullYear();
-  if (!acc[year]) {
-    acc[year] = [];
-  }
-  acc[year].push(talk);
-  return acc;
-}, {} as Record<number, typeof sortedTalks>);
+const talksByYear = sortedTalks.reduce(
+  (acc, talk) => {
+    const year = talk.data.date.getFullYear();
+    if (!acc[year]) {
+      acc[year] = [];
+    }
+    acc[year].push(talk);
+    return acc;
+  },
+  {} as Record<number, typeof sortedTalks>,
+);
 
 /**
  * Extracts and sorts years in descending order
- * 
+ *
  * Ensures year sections are displayed from most recent to oldest.
  */
 const years = Object.keys(talksByYear)
   .map(Number)
   .sort((a, b) => b - a);
-
-
 ---
 
 <BaseLayout>
-  <SEO 
+  <SEO
     slot="head"
     title={pagesConfig.speaking.title}
     description={pagesConfig.speaking.description}
@@ -92,36 +93,39 @@ const years = Object.keys(talksByYear)
       </p>
     </header>
 
-    {years.length > 0 ? (
-      <div class="talks-by-year">
-        {years.map((year) => (
-          <section class="year-section">
-            <h2 class="year-heading">{year}</h2>
-            <div class="talks-list">
-              {talksByYear[year].map((talk) => (
-                <TalkCard
-                  title={talk.data.title}
-                  description={talk.data.description}
-                  event={talk.data.event}
-                  eventUrl={talk.data.eventUrl}
-                  date={talk.data.date}
-                  location={talk.data.location}
-                  type={talk.data.type}
-                  slides={talk.data.slides}
-                  video={talk.data.video}
-                  duration={talk.data.duration}
-                  topics={talk.data.topics}
-                  image={talk.data.image}
-                  featured={talk.data.featured}
-                />
-              ))}
-            </div>
-          </section>
-        ))}
-      </div>
-    ) : (
-      <p class="empty-state">No speaking engagements yet.</p>
-    )}
+    {
+      years.length > 0 ? (
+        <div class="talks-by-year">
+          {years.map((year) => (
+            <section class="year-section">
+              <h2 class="year-heading">{year}</h2>
+              <div class="talks-list">
+                {talksByYear[year].map((talk) => (
+                  <TalkCard
+                    title={talk.data.title}
+                    description={talk.data.description}
+                    event={talk.data.event}
+                    eventUrl={talk.data.eventUrl}
+                    date={talk.data.date}
+                    location={talk.data.location}
+                    type={talk.data.type}
+                    slides={talk.data.slides}
+                    video={talk.data.video}
+                    duration={talk.data.duration}
+                    topics={talk.data.topics}
+                    image={talk.data.image}
+                    featured={talk.data.featured}
+                    id={talk.id}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      ) : (
+        <p class="empty-state">No speaking engagements yet.</p>
+      )
+    }
   </main>
 
   <style>

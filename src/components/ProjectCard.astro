@@ -50,6 +50,9 @@ interface Props {
 
   /** Whether this is a meta-project (portfolio itself) for special highlighting */
   isMeta?: boolean;
+
+  /** Optional HTML ID for deep linking */
+  id?: string;
 }
 
 const {
@@ -60,6 +63,7 @@ const {
   techStack = [],
   status = "completed",
   isMeta = false,
+  id,
 } = Astro.props;
 
 // Show max 4 tech tags to keep card clean and consistent
@@ -78,6 +82,7 @@ const statusInfo = statusConfig[status];
 <BaseCard
   href={`/projects/${slug}`}
   class:list={["project-card", { "project-card--meta": isMeta }]}
+  id={id}
 >
   <Fragment slot="meta">{year}</Fragment>
 

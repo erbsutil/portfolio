@@ -67,7 +67,7 @@ const carouselItems: CarouselItem[] = [
   })),
   ...recentTalks.map((t) => ({
     type: "talk" as const,
-    href: "/speaking",
+    href: `/speaking#${t.id}`,
     label: new Intl.DateTimeFormat("en-US", {
       month: "short",
       year: "numeric",
