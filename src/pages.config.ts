@@ -85,7 +85,7 @@ export const pagesConfig = {
     title: 'Journey - Career Growth & Learning Timeline',
     description: 'A chronological timeline of my professional journey, highlighting key milestones, learning moments, and career transitions that shaped my growth as an engineer.',
     heading: 'Journey',
-    intro: 'A timeline of my professional growth and learning progression. This isn\'t a resume—it\'s a story of how I\'ve evolved as an engineer, the pivotal moments that shaped my thinking, and the skills I\'ve developed along the way.',
+    intro: 'A timeline of my professional growth and learning progression. This is not a resume. It traces how I evolved as an engineer: milestones that changed how I work, and skills I picked up along the way.',
   },
   
   /**

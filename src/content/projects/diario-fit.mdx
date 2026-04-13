@@ -1,0 +1,131 @@
+---
+title: "Diário Fit: Telegram bot & web dashboard"
+role: "Full-stack engineer"
+year: 2026
+status: "ongoing"
+duration: "Ongoing"
+outcomeSummary: "Food and training log for family and friends in Telegram (private chat or groups), with a read-only summary opened from a link the bot sends, no extra login or app install."
+overview: "After struggling with weight in the past, what worked was a shared diary with my family, not another solo app. Diário Fit extends that habit to family and friends: the same bot works in private chat or inside Telegram groups, so you can log alone or alongside people you trust in a shared group. They record meals and workouts in the thread; when someone wants day totals, longer-range consistency, or a light comparison with others, they ask the bot for the panel and open the link it returns. Day-to-day logging stays in chat; the panel is for aggregated views when they want them."
+problem: "We had weak intuition about what we actually eat across days, and almost no durable view of how training volume, frequency, and variety move over time. Memory skews toward extremes; without a steady record and a way to look back, it is hard to evolve or correct either diet or training on purpose."
+constraints:
+  - "Self-hosted Windmill at home (no managed cloud bill for the bot; I own updates and webhook reachability). The Bun worker cannot load multi-file TypeScript like a normal Node deploy, so production is one esbuild bundle while the repo stays modular."
+  - "Telegram webhooks retry and time out around ~60s: work must stay inside that budget, and the same path must be idempotent (update_id before any model call) so retries do not duplicate rows or API spend. Shared groups add noise: heuristics catch food and workouts without slash commands on every line."
+  - "Dashboard access is a short-lived URL token from the bot; only server code uses the Supabase service role, and peer queries return minimal columns so private fields never reach another person’s browser."
+  - "The bot and dashboard must share each user’s local calendar day (mirrored localDay.ts + a small regression check). Clock-sensitive UI renders on the client to avoid SSR/hydration mismatch."
+approach: "Telegram hits a self-hosted Windmill webhook; one bundled Bun job runs the bot. Gemini parses and transcribes; Postgres (Supabase) holds state. The webhook path is synchronous: dedupe on update_id, then model work and persistence, then the HTTP response so retries stay safe and work stays inside Telegram’s time limit. The dashboard is Next.js on Vercel: validate token, service-role reads, owner and minimal peer columns fetched in parallel, same local-date window as the bot, ninety-day heatmap for weekly rhythm. Structured bot_events in Supabase feed a scheduled Windmill job that aggregates recent traffic (intents, average Gemini latency, error mix) and sends the admin a Telegram report with a short Gemini-written analysis; production errors can go to Sentry through the Envelope API without shipping the full SDK."
+keyDecisions:
+  - decision: "Telegram instead of WhatsApp as the chat surface"
+    reasoning: "People already live in messaging apps; the goal was zero friction, not a new install. Telegram’s Bot API fits a small, iterative product: straightforward webhooks, bots in private chats and groups, and room to evolve behaviour without a business-console workflow. WhatsApp’s path for comparable automation is heavier (Business API, stricter messaging rules, and cost signals that did not match a household project)."
+    alternatives:
+      - "WhatsApp Business API / Cloud API (higher operational overhead for this scale and use case)"
+      - "A standalone mobile app (rejected: extra install and separate login)"
+  - decision: "Self-hosted Windmill instead of cloud or a custom Node service"
+    reasoning: "Workflows, retries, and schedules in one place; cost is the box I already have. Tradeoff is ops on that host."
+    alternatives:
+      - "Windmill Cloud or Railway/Fly with hand-rolled workers (extra cost or glue for the same outcome)"
+  - decision: "Gemini for text, image, and voice; heuristics for group noise"
+    reasoning: "One API key and quota. Keywords and patterns filter the group so we do not call a model on every irrelevant line."
+    alternatives:
+      - "Slash-only commands or a classifier on every message (friction or cost)"
+techStack:
+  - "TypeScript (Bun on Windmill)"
+  - "Windmill (Docker, self-hosted)"
+  - "Supabase (PostgreSQL, RLS)"
+  - "Google Gemini 2.5 Flash"
+  - "Telegram Bot API"
+  - "esbuild"
+  - "Next.js (App Router, Server Components)"
+  - "React 19, Tailwind CSS 4"
+  - "ApexCharts, Radix UI, Vaul, date-fns, Vitest"
+  - "Vercel (dashboard); scheduled observability job (Windmill)"
+  - "ElevenLabs / Whisper / Sentry"
+impact:
+  metrics:
+    - label: "Where the bot runs"
+      value: "Self-hosted at home"
+    - label: "How people open the panel"
+      value: "Link from Telegram (no new login)"
+    - label: "Bot version (Apr 2026)"
+      value: "11.0.0"
+  qualitative: "The same accountability that worked on paper and in chat now has structured history: day-level signals, longer-range consistency, and, when you share Telegram groups with others, a Groups tab in the dashboard that shows peer diet and workout rhythm (heatmaps and totals) without exposing raw meal text. What others see in the browser is limited by design, not by convention alone."
+learnings:
+  - "Tuning who gets silence in a group chat took more iterations than swapping models."
+  - "Duplicated date logic plus a test was more reliable than a shared package we would not maintain."
+  - "Server Components and narrow types do most of the privacy work before the browser runs."
+  - "At household scale, full APM is overkill; storing structured bot_events and a weekly digest still makes errors and latency easier to see than tailing raw logs."
+featured: true
+order: 0
+---
+
+import { Image } from "astro:assets";
+import screenHome from "../../assets/images/screens/fit/home.png";
+import screenCalendar from "../../assets/images/screens/fit/home-calendar.png";
+import screenWorkout from "../../assets/images/screens/fit/workout-progress.png";
+import screenGroups from "../../assets/images/screens/fit/groups.png";
+
+## Product snapshots
+
+The dashboard is intentionally small: a few tabs, no extra login. Screens below are from the live product (Portuguese UI).
+
+### Groups and peer progress
+
+If you authorize **Telegram groups** in your profile, the **Groups** tab lists those chats and shows **each member’s diet and workout consistency** side by side: same heatmap grammar as your own view, plus safe aggregates (for example calories for peers) so you can see who is on a streak or falling behind; **not** the full text of someone else’s meals. That is the main “social” surface of the product: motivation and rhythm in shared groups, with privacy enforced in the query layer.
+
+The bot itself can live **only in DMs** or **in one or more groups** (or both); group chat is optional and gated so ordinary conversation does not spam the pipeline.
+
+<figure class="case-study-shot">
+  <Image
+    src={screenGroups}
+    alt="Diário Fit Groups tab showing Telegram groups and peer diet and workout heatmaps"
+    widths={[280, 416, 520]}
+    sizes="(max-width: 480px) 92vw, 416px"
+    loading="lazy"
+    decoding="async"
+    class="case-study-shot__img"
+  />
+  <figcaption>Groups tab: shared Telegram chats and side-by-side consistency for each member (diet and workout heatmaps; aggregates only; no raw meal text from peers).</figcaption>
+</figure>
+
+### Summary and diet consistency
+
+<figure class="case-study-shot">
+  <Image
+    src={screenHome}
+    alt="Diário Fit dashboard summary tab with macro cards and diet consistency heatmap"
+    widths={[280, 416, 520]}
+    sizes="(max-width: 480px) 92vw, 416px"
+    loading="lazy"
+    decoding="async"
+    class="case-study-shot__img"
+  />
+  <figcaption>Summary tab: today’s macros and the diet consistency grid (last ~70 days).</figcaption>
+</figure>
+
+<figure class="case-study-shot">
+  <Image
+    src={screenCalendar}
+    alt="Close-up of the diet consistency heatmap with weekday rows and month labels"
+    widths={[280, 416, 520]}
+    sizes="(max-width: 480px) 92vw, 416px"
+    loading="lazy"
+    decoding="async"
+    class="case-study-shot__img"
+  />
+  <figcaption>Same heatmap framing as GitHub contributions: weeks as columns, weekdays as rows.</figcaption>
+</figure>
+
+### Training progress
+
+<figure class="case-study-shot">
+  <Image
+    src={screenWorkout}
+    alt="Diário Fit training tab with workout consistency and volume chart"
+    widths={[280, 416, 520]}
+    sizes="(max-width: 480px) 92vw, 416px"
+    loading="lazy"
+    decoding="async"
+    class="case-study-shot__img"
+  />
+  <figcaption>Training tab: workout consistency and volume over time (owner view).</figcaption>
+</figure>
+

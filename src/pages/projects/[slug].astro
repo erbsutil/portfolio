@@ -397,6 +397,10 @@ const readingTime = formatReadingTime(calculateReadingTime(allText));
       margin-top: 0;
     }
 
+    .case-study-content :global(h2:first-of-type) {
+      margin-top: 0;
+    }
+
     .case-study-content :global(h3) {
       font-size: 1.375rem;
       margin-top: 3rem;
@@ -524,6 +528,36 @@ const readingTime = formatReadingTime(calculateReadingTime(allText));
       margin-top: 5rem;
       padding-top: 4rem;
       border-top: 1px solid var(--color-border);
+    }
+
+    .case-study-content :global(figure.case-study-shot) {
+      margin: 1.5rem auto;
+      max-width: min(100%, 26rem);
+      text-align: center;
+    }
+
+    .case-study-content :global(figure.case-study-shot .case-study-shot__img),
+    .case-study-content :global(figure.case-study-shot img) {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+      margin: 0 auto;
+      border-radius: 8px;
+      border: 1px solid var(--color-border);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    }
+
+    .case-study-content :global(figure.case-study-shot figcaption) {
+      margin-top: 0.5rem;
+      font-size: 0.8125rem;
+      line-height: 1.45;
+      color: var(--color-text-muted);
+      font-style: normal;
+      text-align: center;
+      max-width: 24rem;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     .case-study-content :global(ul) {

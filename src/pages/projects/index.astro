@@ -41,7 +41,11 @@ const allProjects = await getCollection("projects");
  * This allows manual curation of featured projects while maintaining
  * chronological order for others.
  */
-const sortedProjects = allProjects.sort((a, b) => b.data.year - a.data.year);
+const sortedProjects = allProjects.sort((a, b) => {
+  const y = b.data.year - a.data.year;
+  if (y !== 0) return y;
+  return (a.data.order ?? 999) - (b.data.order ?? 999);
+});
 
 const projectsByYear = sortedProjects.reduce(
   (acc, project) => {

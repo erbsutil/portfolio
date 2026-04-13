@@ -49,14 +49,18 @@ function getRatingColor(percentage: number) {
   if (percentage >= 50) return "var(--color-rating-medium)";
   return "var(--color-rating-low)";
 }
+
+const scoreMetrics = metrics.filter((m) => parseScore(m.value));
+const textMetrics = metrics.filter((m) => !parseScore(m.value));
+const showLighthouseRow = scoreMetrics.length > 0;
+const showDivider = showLighthouseRow && textMetrics.length > 0;
 ---
 
-<div class="impact-section">
-  <div class="lighthouse-row">
-    {
-      metrics
-        .filter((m) => parseScore(m.value))
-        .map((metric) => {
+<div class:list={["impact-section", { "impact-section--text-only": !showLighthouseRow }]}>
+  {
+    showLighthouseRow && (
+      <div class="lighthouse-row">
+        {scoreMetrics.map((metric) => {
           const scoreData = parseScore(metric.value)!;
           const percentage = (scoreData.score / scoreData.total) * 100;
           const radius = 32;
@@ -88,23 +92,22 @@ function getRatingColor(percentage: number) {
               </span>
             </div>
           );
-        })
-    }
-  </div>
+        })}
+      </div>
+    )
+  }
 
   {
-    metrics.filter((m) => !parseScore(m.value)).length > 0 && (
+    textMetrics.length > 0 && (
       <div class="qualitative-metrics">
-        <div class="divider" />
+        {showDivider && <div class="divider" />}
         <div class="insights-grid">
-          {metrics
-            .filter((m) => !parseScore(m.value))
-            .map((metric) => (
-              <div class="insight-item">
-                <span class="insight-label">{metric.label}</span>
-                <span class="insight-value">{metric.value}</span>
-              </div>
-            ))}
+          {textMetrics.map((metric) => (
+            <div class="insight-item">
+              <span class="insight-label">{metric.label}</span>
+              <span class="insight-value">{metric.value}</span>
+            </div>
+          ))}
         </div>
       </div>
     )
@@ -139,6 +142,13 @@ function getRatingColor(percentage: number) {
     flex-direction: column;
     align-items: center;
     gap: 2.5rem;
+  }
+
+  /* No Lighthouse row: avoid extra gap and keep padding balanced */
+  .impact-section--text-only {
+    gap: 0;
+    padding-top: 1.75rem;
+    padding-bottom: 2rem;
   }
 
   /* Lighthouse Rows */
