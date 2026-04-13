@@ -4,11 +4,11 @@ role: "Fullstack Engineer & Product Owner"
 year: 2025
 duration: "Ongoing"
 teamSize: 1
-outcomeSummary: "Bot de diário alimentar e de treino em produção no Telegram com análise multimodal via Gemini, zero infraestrutura gerenciada e dashboard web acessível via link mágico — sem nenhum login adicional."
-overview: "O Diário Fit é uma plataforma de acompanhamento nutricional e de treino construída para uso familiar. O backend vive inteiramente no Windmill — plataforma serverless com runtime Bun — e expõe o produto via bot no Telegram. Quando o utilizador quer uma visão agregada, pede 'painel' ao bot, que devolve um URL com token; esse link abre um dashboard Next.js que carrega dados do Supabase, exibe heatmaps de consistência de 90 dias, totais do dia, volume de musculação e ranking de grupo — tudo sem pedir password. Meu papel foi de engenheiro e dono do produto: projetei a arquitetura completa, escrevi todos os scripts e componentes, defini o protocolo de IA e mantive o sistema em evolução contínua (versão 11.0.0 em abril/2026)."
+outcomeSummary: "Bot de diário alimentar e de treino em produção no Telegram com análise multimodal via Gemini, hospedado num servidor local próprio com Docker a custo zero, e dashboard web acessível via link mágico — sem nenhum login adicional."
+overview: "O Diário Fit é uma plataforma de acompanhamento nutricional e de treino construída para uso familiar. O backend vive inteiramente no Windmill — plataforma de workflows com runtime Bun — auto-hospedado num servidor local via Docker a custo zero, e expõe o produto via bot no Telegram. Quando o utilizador quer uma visão agregada, pede 'painel' ao bot, que devolve um URL com token; esse link abre um dashboard Next.js que carrega dados do Supabase, exibe heatmaps de consistência de 90 dias, totais do dia, volume de musculação e ranking de grupo — tudo sem pedir password. Meu papel foi de engenheiro e dono do produto: projetei a arquitetura completa, escrevi todos os scripts e componentes, defini o protocolo de IA e mantive o sistema em evolução contínua (versão 11.0.0 em abril/2026)."
 problem: "A família precisava de uma forma de registrar refeições e treinos no dia a dia sem fricção — sem formulários, sem apps extras para instalar. O canal já existente era o Telegram. O desafio técnico era transformar mensagens livres em texto, foto e voz em dados estruturados e persistidos de forma confiável, e depois oferecer uma visualização de tendências sem introduzir um segundo fluxo de autenticação — forçar login anularia a fluidez do ecossistema conversacional."
 constraints:
-  - "Zero infraestrutura própria: sem servidor, sem container, sem cron job manual — tudo via Windmill."
+  - "Infraestrutura self-hosted a custo zero: Windmill rodando num servidor local próprio via Docker — sem custo de cloud, mas com responsabilidade de manter o daemon e a conectividade do webhook."
   - "Runtime Bun no worker do Windmill não suporta imports relativos entre scripts, obrigando bundle único por esbuild."
   - "API do Telegram encerra conexão webhook após ~60 s; jobs com Gemini + ElevenLabs se aproximam desse limite."
   - "Custo zero de GPU: análise de imagem, transcrição de voz e geração de texto devem reutilizar a mesma chave Gemini."
@@ -19,12 +19,13 @@ constraints:
   - "Privacidade de grupo: outros membros só podem expor colunas mínimas (telegram_id, created_at, calories) — raw_input, parsed_data e exercises jamais chegam ao browser de terceiros."
   - "Fuso horário per-user: o conceito de 'hoje' é o dia civil no fuso do perfil (user_profiles.timezone), não no fuso do servidor nem do browser."
   - "Hidratação SSR↔CSR: componentes que dependem do relógio (heatmaps, 'Hoje/Ontem') têm de ser renderizados no cliente ou usar suppressHydrationWarning para evitar mismatch."
-approach: "O backend adota o Windmill como plataforma de execução para eliminar gerenciamento de servidor. O ponto de entrada é um webhook do Telegram que dispara um job Bun. Toda a lógica do bot vive em módulos TypeScript em src/, compilados num bundle único via esbuild antes de cada deploy. O Gemini 2.5 Flash centraliza análise de texto, interpretação de foto e transcrição de voz. O Supabase (PostgreSQL) armazena perfis, entradas diárias e treinos. O dashboard segue o modelo Server Component → Client Component do Next.js App Router: o Server Component valida o token, lê o perfil com service role bypassando RLS, busca entradas do titular e de peers em paralelo via Promise.all, calcula os totais do dia usando localDay.ts e remove campos sensíveis antes de serializar. A lógica de 'dia civil' (timezone-aware) foi extraída em localDay.ts, espelhado entre backend e frontend para garantir que 'hoje' no bot e no dashboard seja sempre o mesmo intervalo UTC."
+approach: "O backend roda no Windmill self-hosted num servidor local via Docker — sem custo de cloud e com controlo total sobre o ambiente. O ponto de entrada é um webhook do Telegram que dispara um job Bun. Toda a lógica do bot vive em módulos TypeScript em src/, compilados num bundle único via esbuild antes de cada deploy. O Gemini 2.5 Flash centraliza análise de texto, interpretação de foto e transcrição de voz. O Supabase (PostgreSQL) armazena perfis, entradas diárias e treinos. O dashboard segue o modelo Server Component → Client Component do Next.js App Router: o Server Component valida o token, lê o perfil com service role bypassando RLS, busca entradas do titular e de peers em paralelo via Promise.all, calcula os totais do dia usando localDay.ts e remove campos sensíveis antes de serializar. A lógica de 'dia civil' (timezone-aware) foi extraída em localDay.ts, espelhado entre backend e frontend para garantir que 'hoje' no bot e no dashboard seja sempre o mesmo intervalo UTC."
 keyDecisions:
-  - decision: "Windmill como plataforma de execução em vez de servidor Node/Bun próprio"
-    reasoning: "Elimina gerenciamento de infra, restart de processos, deploy manual e cron jobs separados. O Windmill entrega logs estruturados por execução, retry automático e agendamento nativo — tudo que um servidor Express simples exigiria operacionalmente."
+  - decision: "Windmill self-hosted via Docker em servidor local, em vez de cloud gerenciada"
+    reasoning: "Roda num servidor local próprio com Docker, eliminando custo de cloud sem abrir mão de logs estruturados por execução, retry automático e agendamento nativo. O tradeoff é a responsabilidade de manter o daemon e garantir a conectividade do webhook — algo aceitável para um projeto familiar com acesso físico à máquina."
     alternatives:
-      - "Railway ou Fly.io com servidor Express/Hono"
+      - "Windmill Cloud (descartado: custo mensal desnecessário para o volume familiar)"
+      - "Railway ou Fly.io com servidor Express/Hono (descartado: mais complexidade operacional sem os benefícios do Windmill)"
       - "Cloudflare Workers (descartado pelo limite de runtime e ausência de Bun nativo)"
   - decision: "Bundle único por esbuild em vez de múltiplos scripts com imports relativos"
     reasoning: "O loader Bun no worker do Windmill falha ao resolver imports relativos entre arquivos. Bundlar tudo num único arquivo main.ts entregável resolve o problema sem alterar a estrutura de desenvolvimento, que mantém módulos separados em src/."
@@ -70,7 +71,7 @@ keyDecisions:
       - "Calendário mensal estilo Google Calendar (descartado: 90 dias não cabem sem scroll)"
 techStack:
   - "TypeScript (Bun runtime — backend)"
-  - "Windmill (plataforma serverless de workflows)"
+  - "Windmill (self-hosted via Docker)"
   - "Supabase (PostgreSQL + REST API)"
   - "Google Gemini 2.5 Flash (análise de texto, visão e transcrição de voz)"
   - "ElevenLabs (TTS restrito a momentos específicos)"
@@ -89,8 +90,8 @@ techStack:
   - "Vercel (deploy do dashboard)"
 impact:
   metrics:
-    - label: "Infraestrutura gerenciada"
-      value: "0 servidores"
+    - label: "Custo de cloud"
+      value: "R$ 0 (servidor local + Docker)"
     - label: "APIs de IA distintas"
       value: "1 (Gemini centralizado)"
     - label: "Versão atual do bot"
