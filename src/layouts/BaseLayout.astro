@@ -70,6 +70,24 @@ import "../styles/utilities.css";
     <link rel="manifest" href="/site.webmanifest" />
     <meta name="theme-color" content="#0a0a0a" />
 
+    <!-- Google tag (gtag.js) -->
+    {siteConfig.googleAnalyticsId && (
+      <>
+        <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${siteConfig.googleAnalyticsId}`}></script>
+        <script is:inline define:vars={{ id: siteConfig.googleAnalyticsId }}>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', id);
+
+          // Support for Astro View Transitions
+          document.addEventListener('astro:page-load', () => {
+            gtag('config', id);
+          });
+        </script>
+      </>
+    )}
+
     <ClientRouter />
 
     <!-- Prevent flash of wrong theme -->

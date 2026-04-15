@@ -63,14 +63,14 @@ export const siteConfig = {
    * 
    * Used as fallback when page-specific title is not provided.
    */
-  title: getEnv('SITE_TITLE', 'Erick Sutil — Frontend Developer'),
+  title: getEnv('SITE_TITLE', 'Erick Sutil — Frontend Engineer'),
   
   /**
    * Site description
    * 
    * Default meta description for SEO and social sharing.
    */
-  description: getEnv('SITE_DESCRIPTION', 'Frontend developer with 9 years of experience building performant web applications and pragmatic architectures.'),
+  description: getEnv('SITE_DESCRIPTION', 'Frontend Engineer scaling high-performance architectures, orchestrating microfrontends, and automating AI workflows for B2B platforms.'),
   
   /**
    * Author information
@@ -83,10 +83,10 @@ export const siteConfig = {
     name: getEnv('SITE_AUTHOR_NAME', 'Erick Sutil'),
     
     /** Professional title or role */
-    title: getEnv('SITE_AUTHOR_TITLE', 'Frontend Developer'),
+    title: getEnv('SITE_AUTHOR_TITLE', 'Frontend Engineer'),
     
     /** Short biography or professional summary */
-    bio: getEnv('SITE_AUTHOR_BIO', 'Frontend developer with 9 years of experience building performant web applications and pragmatic architectures.'),
+    bio: getEnv('SITE_AUTHOR_BIO', 'Frontend Engineer scaling high-performance architectures, orchestrating microfrontends, and automating AI workflows for B2B platforms.'),
     
     /** Contact email address */
     email: getEnv('SITE_AUTHOR_EMAIL', 'erbsutil@gmail.com'),
@@ -129,6 +129,14 @@ export const siteConfig = {
     { label: 'Talks', href: '/speaking' },
     { label: 'Contact', href: '/contact' },
   ],
+  
+  /**
+   * Google Analytics (gtag.js)
+   * 
+   * Measurement ID for tracking site analytics.
+   * Format: G-XXXXXXXXXX
+   */
+  googleAnalyticsId: getEnv('GOOGLE_ANALYTICS_ID', ''),
 } as const;
 
 /**
