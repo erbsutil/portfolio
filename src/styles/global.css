@@ -1,0 +1,341 @@
+/* Global Styles
+ *
+ * Engineering magazine on paper. Light is default.
+ * Serif for brand + pull quotes. Mono for folio / meta.
+ * Paper grain + soft wash. Print motion: ink-in, rule-draw.
+ */
+
+/* Latin only — PT accents are covered; skips latin-ext payload for FCP. */
+@import "@fontsource/ibm-plex-sans/latin-400.css";
+@import "@fontsource/ibm-plex-sans/latin-500.css";
+@import "@fontsource/ibm-plex-sans/latin-600.css";
+@import "@fontsource/ibm-plex-sans/latin-700.css";
+@import "@fontsource/ibm-plex-serif/latin-400-italic.css";
+@import "@fontsource/ibm-plex-serif/latin-600.css";
+@import "@fontsource/ibm-plex-serif/latin-700.css";
+@import "@fontsource/ibm-plex-mono/latin-400.css";
+@import "@fontsource/ibm-plex-mono/latin-500.css";
+
+:root {
+  --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "IBM Plex Serif", "Georgia", "Times New Roman", serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Code", Menlo, Consolas, monospace;
+
+  /* Sticky site header: .nav-bar min-height + .site-nav border */
+  --site-header-height: calc(3.5rem + 1px);
+
+  --color-bg: #eef1ee;
+  --color-bg-secondary: #e4e9e5;
+  --color-bg-elevated: #d9e0db;
+  --color-bg-hover: color-mix(in srgb, #0e1512 7%, #eef1ee);
+  --color-text: #0e1512;
+  --color-text-secondary: #24332c;
+  --color-text-muted: #3a4d44;
+  --color-border: #aeb8b2;
+  --color-border-subtle: #cfd7d2;
+  --color-accent: #176b60;
+  --color-accent-hover: #12574e;
+  --color-accent-muted: rgba(23, 107, 96, 0.12);
+  --color-accent-glow: transparent;
+
+  --gradient-text: none;
+  --gradient-accent: none;
+  --gradient-card: none;
+  --gradient-border: none;
+  --gradient-atmosphere: none;
+
+  /* Soft fiber grain — readable, not decorative noise */
+  --bg-pattern: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.055'/%3E%3C/svg%3E");
+  --bg-pattern-size: 180px;
+  /* Quiet paper wash behind grain (print stock, not gradient chrome) */
+  --bg-wash: radial-gradient(
+    ellipse 120% 70% at 50% -10%,
+    color-mix(in srgb, #ffffff 55%, var(--color-bg)) 0%,
+    transparent 62%
+  );
+
+  --color-status-ongoing: #1f7a6e;
+  --color-status-archived: #3a4d44;
+  --color-rating-high: #00a854;
+  --color-rating-medium: #c47f00;
+  --color-rating-low: #d93a30;
+
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4rem;
+  --space-4xl: 6rem;
+
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  --font-size-4xl: 2.25rem;
+  --font-size-5xl: 3rem;
+
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --max-width-prose: 65ch;
+  /* Single shell spine: nav, home, indexes, footer share this. */
+  --max-width-content: 1100px;
+  /* Page gutter — home / indexes / case / talk stay in sync. */
+  --pad-page-inline: 1.5rem;
+  /* Case studies: centered shell (~media pair width), not near-full viewport. */
+  --max-width-case: min(68rem, calc(100vw - 3rem));
+  /* Shared horizontal inset for case / talk / reader chrome. */
+  --pad-case-inline: var(--pad-page-inline);
+
+  /*
+   * Editorial teaser rhythm (CaseLead / ProjectCard / TalkLead / TalkCard):
+   * kicker (badge+meta) → title → event/subtitle → dek → CTA.
+   * Teaser rhythm (photo / kicker / title / dek / CTA).
+   * Empty kickers collapse by default; grids that contain a badge
+   * re-reserve --teaser-kicker-min-h so siblings stay aligned.
+   */
+  --teaser-kicker-min-h: 1.5625rem;
+  --teaser-kicker-gap: 0.45rem;
+  --teaser-title-gap: 0.45rem;
+  --teaser-event-gap: 0.55rem;
+  --teaser-dek-gap: 0.85rem;
+  --teaser-cta-pad: 0.85rem;
+  --teaser-media-gap: 1.35rem;
+  --teaser-lead-media-gap: 1.75rem;
+
+  --border-radius-sm: 0;
+  --border-radius-md: 0;
+  --border-radius-lg: 0;
+
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+  --shadow-glow: none;
+
+  --ease-print: cubic-bezier(0.22, 1, 0.36, 1);
+  --transition-fast: 150ms ease;
+  --transition-base: 200ms ease;
+  --transition-slow: 300ms ease;
+
+  --focus-ring-color: var(--color-accent);
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 3px;
+}
+
+@media (max-width: 768px) {
+  :root {
+    --pad-page-inline: 1rem;
+    /* Drop the extra outer margin so mobile matches home edge-to-edge rhythm. */
+    --max-width-case: 100%;
+  }
+}
+
+[data-theme="dark"] {
+  --color-bg: #0c0f0e;
+  --color-bg-secondary: #131816;
+  --color-bg-elevated: #1a201d;
+  --color-bg-hover: color-mix(in srgb, #e8ebe9 8%, #0c0f0e);
+  --color-text: #eef1ef;
+  --color-text-secondary: #c5cdc8;
+  --color-text-muted: #9aa59f;
+  --color-border: #3a4540;
+  --color-border-subtle: #2a322e;
+  --color-accent: #3db5a6;
+  --color-accent-hover: #5fc4b7;
+  --color-accent-muted: rgba(61, 181, 166, 0.14);
+  --bg-pattern: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  --bg-wash: radial-gradient(
+    ellipse 120% 70% at 50% -10%,
+    color-mix(in srgb, #1a221f 35%, var(--color-bg)) 0%,
+    transparent 62%
+  );
+  --color-status-ongoing: #3db5a6;
+  --color-status-archived: #9aa59f;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color-scheme: light;
+  -webkit-tap-highlight-color: transparent;
+  scroll-padding-top: calc(var(--site-header-height) + 0.75rem);
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--color-bg);
+  background-image: var(--bg-wash), var(--bg-pattern);
+  background-size: auto, var(--bg-pattern-size);
+  background-repeat: no-repeat, repeat;
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+  min-height: 100vh;
+  touch-action: manipulation;
+}
+
+a {
+  color: var(--color-accent);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--color-accent-hover);
+}
+
+a:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
+a.app-card,
+a.base-card,
+a.hero-rail-item,
+a.related-item,
+a.ledger-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+a.app-card:hover,
+a.app-card:focus-visible,
+a.base-card:hover,
+a.base-card:focus-visible,
+a.hero-rail-item:hover,
+a.hero-rail-item:focus-visible,
+a.related-item:hover,
+a.related-item:focus-visible,
+a.ledger-link:hover,
+a.ledger-link:focus-visible {
+  color: inherit;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+ul,
+ol {
+  list-style-position: inside;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background-color: var(--color-bg-secondary);
+  padding: 0.125rem 0.25rem;
+}
+
+pre {
+  background-color: var(--color-bg-secondary);
+  padding: var(--space-md);
+  overflow-x: auto;
+}
+
+pre code {
+  background-color: transparent;
+  padding: 0;
+}
+
+.container {
+  max-width: var(--max-width-content);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--space-lg);
+  padding-right: var(--space-lg);
+}
+
+.prose {
+  max-width: var(--max-width-prose);
+}
+
+.brand {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.pull-quote {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(1.15rem, 2.2vw, 1.4rem);
+  line-height: 1.45;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+  margin: 1.25rem 0 0;
+  padding: 1rem 0 1rem 1.15rem;
+  border-left: 1px solid var(--color-border);
+  max-width: 38rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+@keyframes ink-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes rule-draw {
+  from {
+    transform: scaleX(0);
+    opacity: 0.25;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

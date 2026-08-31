@@ -1,0 +1,343 @@
+---
+/**
+ * Contact Page
+ *
+ * Route: /[locale]/contact
+ */
+
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SEO from "../../components/SEO.astro";
+import StructuredData from "../../components/StructuredData.astro";
+import { siteConfig } from "../../config";
+import { withLocale } from "../../i18n/config";
+import { localeFromParams, localeStaticPaths } from "../../i18n/utils";
+import { getUi } from "../../i18n/ui";
+import { identitySocialLinks } from "../../lib/identityLinks";
+
+export function getStaticPaths() {
+  return localeStaticPaths();
+}
+
+const locale = localeFromParams(Astro.params.locale);
+const ui = getUi(locale);
+
+const socialLinks = identitySocialLinks();
+---
+
+<BaseLayout locale={locale}>
+  <SEO
+    slot="head"
+    locale={locale}
+    pathWithoutLocale="/contact"
+    title={ui.pages.contact.title}
+    description={ui.pages.contact.description}
+    type="website"
+    imageAlt={`${ui.pages.contact.title} · ${siteConfig.author.name}`}
+  />
+
+  <StructuredData
+    locale={locale}
+    type="ProfilePage"
+    data={{
+      name: siteConfig.author.name,
+      description: ui.pages.contact.description,
+      url: new URL(withLocale(locale, "/contact"), siteConfig.url).href,
+    }}
+  />
+
+  <StructuredData
+    locale={locale}
+    type="BreadcrumbList"
+    data={{
+      items: [
+        { name: ui.pages.contact.breadcrumbHome, url: withLocale(locale, "/") },
+        {
+          name: ui.pages.contact.breadcrumbContact,
+          url: withLocale(locale, "/contact"),
+        },
+      ],
+    }}
+  />
+
+  <div class="contact-page">
+    <section class="primary-zone">
+      <h1>{ui.pages.contact.heading}</h1>
+      <p class="lead">
+        {ui.pages.contact.intro}
+      </p>
+      <a
+        href={`mailto:${siteConfig.author.email}?subject=${encodeURIComponent(ui.pages.contact.mailSubject)}`}
+        class="email-link"
+      >
+        {siteConfig.author.email}
+      </a>
+    </section>
+
+    <div class="contact-aside">
+      <section class="secondary-zone">
+        <h2>{ui.pages.contact.resumeElsewhere}</h2>
+        <div class="social-links">
+          <a href="/Erick_Sutil_Resume.pdf" target="_blank" rel="noopener noreferrer">
+            {ui.pages.contact.resume} (PDF)
+          </a>
+          {
+            socialLinks.map((link) => (
+              <>
+                <span class="separator">·</span>
+                <a href={link.url} target="_blank" rel="me noopener noreferrer">
+                  {link.platform}
+                </a>
+              </>
+            ))
+          }
+        </div>
+      </section>
+
+      <section class="agents-zone" id="agents" aria-labelledby="agents-heading">
+        <h2 id="agents-heading">{ui.pages.contact.agentsHeading}</h2>
+        <p class="agents-intro">{ui.pages.contact.agentsIntro}</p>
+        <div class="agents-files">
+          <a href="/llms.txt">{ui.pages.contact.agentsLlms}</a>
+          <span class="separator" aria-hidden="true">·</span>
+          <a href="/llms-full.txt">{ui.pages.contact.agentsLlmsFull}</a>
+          <span class="separator" aria-hidden="true">·</span>
+          <a href="/resume.json">{ui.pages.contact.agentsResumeJson}</a>
+          <span class="separator" aria-hidden="true">·</span>
+          <code class="agents-mcp" tabindex="0" title={ui.pages.contact.agentsMcpTitle}
+            >{ui.pages.contact.agentsMcpPath}</code
+          >
+        </div>
+        <div id="mcp" class="agents-mcp-block" tabindex="-1">
+          <p class="agents-hint">{ui.pages.contact.agentsMcpHint}</p>
+          <pre class="agents-snippet" tabindex="0"><code>{`{
+  "mcpServers": {
+    "erbsu": { "url": "https://www.erbsu.com/api/mcp" }
+  }
+}`}</code></pre>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <style>
+    .contact-page {
+      max-width: var(--max-width-content);
+      margin: 0 auto;
+      padding: 3rem 1.5rem 4rem;
+    }
+
+    .primary-zone {
+      margin-bottom: 0;
+      max-width: 36rem;
+    }
+
+    @media (min-width: 900px) {
+      .contact-page {
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(16rem, 0.85fr);
+        column-gap: 2.5rem;
+        column-rule: 1px solid var(--color-border-subtle);
+        align-items: start;
+      }
+
+      .contact-aside {
+        padding-top: 0.35rem;
+      }
+    }
+
+    .primary-zone h1 {
+      font-family: var(--font-display);
+      font-size: clamp(1.85rem, 4vw, 2.45rem);
+      font-weight: 700;
+      color: var(--color-text);
+      margin-bottom: 1rem;
+      letter-spacing: -0.03em;
+      line-height: 1.12;
+    }
+
+    .lead {
+      font-size: 1.125rem;
+      line-height: 1.65;
+      color: var(--color-text-secondary);
+      max-width: 36rem;
+      margin: 0 0 1.5rem;
+    }
+
+    .email-link {
+      display: block;
+      font-family: var(--font-sans);
+      font-size: clamp(1.35rem, 3.5vw, 1.75rem);
+      font-weight: 600;
+      color: var(--color-text);
+      text-decoration: none;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+      transition: color 0.2s ease;
+      word-break: break-word;
+    }
+
+    .email-link:hover {
+      color: var(--color-accent-hover);
+    }
+
+    .secondary-zone h2 {
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      line-height: 1.25;
+      color: var(--color-text);
+      margin: 0 0 0.85rem;
+      text-transform: none;
+    }
+
+    .secondary-zone {
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--color-border);
+      margin-bottom: 2rem;
+    }
+
+    @media (min-width: 900px) {
+      .secondary-zone {
+        padding-top: 0;
+        border-top: none;
+        margin-bottom: 2rem;
+      }
+    }
+
+    .agents-zone {
+      max-width: none;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--color-border);
+    }
+
+    .agents-zone h2 {
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      line-height: 1.25;
+      color: var(--color-text);
+      margin: 0 0 0.65rem;
+    }
+
+    .agents-intro,
+    .agents-hint {
+      margin: 0 0 0.7rem;
+      font-size: 0.9375rem;
+      line-height: 1.55;
+      color: var(--color-text-secondary);
+    }
+
+    .agents-hint {
+      color: var(--color-text-muted);
+      font-size: 0.8125rem;
+      margin-bottom: 0.65rem;
+    }
+
+    .agents-mcp-block {
+      scroll-margin-top: 5rem;
+    }
+
+    .agents-files {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.35rem 0;
+      margin: 0 0 0.65rem;
+    }
+
+    .agents-files a,
+    .agents-mcp {
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .agents-files a:hover {
+      color: var(--color-text);
+    }
+
+    .agents-files a:focus-visible,
+    .agents-mcp:focus-visible {
+      outline: var(--focus-ring-width) solid var(--focus-ring-color);
+      outline-offset: var(--focus-ring-offset);
+      border-radius: 2px;
+      color: var(--color-text);
+    }
+
+    .agents-mcp {
+      user-select: all;
+      cursor: text;
+    }
+
+    .agents-snippet {
+      margin: 0;
+      padding: 0.65rem 0.75rem;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      line-height: 1.45;
+      color: var(--color-text-secondary);
+      background: var(--color-bg-secondary);
+      border: 1px solid var(--color-border);
+    }
+
+    .agents-snippet code {
+      font-family: inherit;
+    }
+
+    .agents-files .separator {
+      color: var(--color-text-muted);
+      opacity: 0.55;
+      padding: 0 0.4rem;
+      user-select: none;
+      font-size: 0.8125rem;
+    }
+
+    .social-links {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .social-links a {
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      font-size: 1rem;
+      font-weight: 500;
+      transition: color 0.2s ease;
+    }
+
+    .social-links a:hover {
+      color: var(--color-text);
+    }
+
+    .social-links a:focus-visible {
+      outline: var(--focus-ring-width) solid var(--focus-ring-color);
+      outline-offset: var(--focus-ring-offset);
+      border-radius: 2px;
+      color: var(--color-text);
+    }
+
+    .separator {
+      color: var(--color-text-muted);
+      user-select: none;
+    }
+
+    @media (max-width: 640px) {
+      .contact-page {
+        padding: 2.5rem 1rem 6rem;
+      }
+
+      .primary-zone {
+        margin-bottom: 2.5rem;
+      }
+    }
+  </style>
+</BaseLayout>

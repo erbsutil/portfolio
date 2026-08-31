@@ -1,0 +1,86 @@
+---
+title: "Personal portfolio and case studies"
+role: "Senior Frontend Engineer"
+year: 2026
+outcomeSummary: "Static Astro portfolio: typed bilingual case studies, paper-first editorial UI, near-zero JS by default, plus agent-readable surfaces (llms.txt, JSON Resume, MCP). Live www keeps deferred analytics and Cloudflare Bot Fight."
+overview: "I needed a place to show how I work, not a gallery of thumbnails. This site is static-first Astro with MDX case studies (EN source, pt-BR overlays), a typographic selected-work rail on the homepage, a Featured products shelf, Community year folios, Playwright on critical paths, and machine-readable endpoints so agents and tooling can query the same facts without scraping HTML."
+problem: "Most portfolios look interchangeable: dark theme, role-first hero, card grids, and little proof of judgment. They also leave AI crawlers and agent tooling to guess from messy HTML."
+constraints:
+  - "Zero JavaScript by default on content pages; React only if an interaction earns it."
+  - "Strong Lighthouse Accessibility and SEO on the live homepage; document Perf trade-offs honestly."
+  - "Typed content collections for case studies, talks, and apps."
+  - "Paper-first light UI with readable contrast; dark remains optional."
+  - "Measure real traffic (deferred gtag + Vercel Analytics); do not delete analytics to chase a vanity score."
+  - "Keep Cloudflare edge protections usable; do not CSP-block challenge bootstrap for a Best Practices bump."
+  - "One canonical profile for humans and agents (PDF + JSON Resume + MCP)."
+  - "AI tools allowed for speed, not for unsupervised architecture."
+approach: "Astro for the shell and homepage selected-work list. MDX + i18n overlays for cases and products. Vanilla CSS tokens (IBM Plex) for a quiet editorial system. Year folios and two-column grids instead of card dashboards. Playwright against the built site. Agent layer: profile.ts feeds llms.txt, resume.json, Person JSON-LD, and an MCP server (stdio + Streamable HTTP on Vercel). Production ships deferred analytics after idle and a CSP compatible with Cloudflare challenge scripts."
+keyDecisions:
+  - decision: "Astro over Next.js"
+    reasoning: "A content site does not need a React runtime on every page."
+    alternatives:
+      - "Use Next.js App Router for every page (rejected: JS cost without benefit)"
+  - decision: "Static selected-work list instead of a React hero carousel"
+    reasoning: "The carousel needed an island for fade and paging. A typographic list proves the same work with zero client JS on the homepage."
+    alternatives:
+      - "Keep HeroCarousel as a React island (rejected: interactivity without enough value)"
+  - decision: "Deferred analytics over no analytics"
+    reasoning: "A portfolio that claims engineering judgment should still measure visits. Analytics boot after idle with anonymized IP. Accept a modest Lighthouse cost instead of a silent site."
+    alternatives:
+      - "Omit all analytics for a clean 100 Performance (rejected: unmeasurable product, score vanity)"
+      - "Sync analytics in <head> (rejected: blocks LCP/TBT unnecessarily)"
+  - decision: "Cloudflare-compatible CSP over hash-locked scripts"
+    reasoning: "Hash-only script-src blocked Cloudflare challenge bootstrap and forced turning Bot Fight off for score parity. Production CSP allows the challenge path so edge protection stays on."
+    alternatives:
+      - "Hash CSP that blocks CF challenge to force Best Practices 100 (rejected: security feature disabled for vanity)"
+  - decision: "Paper-first light default over dark-first"
+    reasoning: "Dark tech portfolios are saturated. Light paper with stronger type contrast reads clearer on a first pass."
+    alternatives:
+      - "Keep dark as default (rejected: looks like every other eng portfolio)"
+  - decision: "One Products shelf for every shipped tool"
+    reasoning: "StackBrief and Dieta e Treino are both live products people can open. A Lab bucket made the second one look unfinished."
+    alternatives:
+      - "Separate Products and Lab (rejected: diluted Dieta e Treino)"
+  - decision: "Agent-readable profile (llms.txt + resume.json + MCP) from one source"
+    reasoning: "Agents and IDE tools already fetch llms.txt and MCP. One profile.ts keeps Person schema, JSON Resume, and tools aligned without duplicating MDX bodies."
+    alternatives:
+      - "HTML-only and hope scrapers guess correctly (rejected)"
+      - "Hand-maintained parallel resume JSON (rejected: drift)"
+  - decision: "Playwright over component unit tests"
+    reasoning: "Browser tests catch the flows that matter on a static build."
+  - decision: "Vanilla CSS over Tailwind"
+    reasoning: "Scoped styles and variables were enough here."
+techStack:
+  - "Astro 5"
+  - "TypeScript"
+  - "MDX + Zod collections"
+  - "Vanilla CSS (IBM Plex)"
+  - "Playwright (E2E)"
+  - "Vercel + Cloudflare"
+  - "Google Analytics (deferred gtag)"
+  - "Vercel Web Analytics"
+  - "MCP (Streamable HTTP + stdio)"
+impact:
+  metrics:
+    - label: "Lighthouse (www desktop)"
+      value: "99 Perf · 98 A11y · 100 BP · 100 SEO"
+    - label: "Lighthouse (www mobile)"
+      value: "89 Perf · 98 A11y · 100 BP · 100 SEO"
+    - label: "Homepage client JS"
+      value: "No React island (static list)"
+    - label: "E2E"
+      value: "Playwright 8/8 pass"
+    - label: "Agent surfaces"
+      value: "llms.txt · resume.json · /api/mcp"
+  qualitative: "Audited Aug 9 2026 with Lighthouse 12.8.2 on https://www.erbsu.com/en/ (Cloudflare + deferred analytics). Desktop stays near-perfect; mobile Perf is the main www cost. Playwright a11y/nav suite: 8/8. Agent-readable endpoints ship with the same profile source as the PDF."
+  auditSource: "Lighthouse 12.8.2 CLI on www.erbsu.com/en/: desktop 99/98/100/100, mobile 89/98/100/100. Playwright 8/8. Aug 9 2026."
+  auditDate: "2026-08-09"
+learnings:
+  - "Treating JavaScript as a cost means removing islands when a static list is enough, not deleting analytics or edge security to print a perfect scorecard."
+  - "A 100 earned by stripping measurement and Bot Fight reads as score vanity; document the trade-off."
+  - "First impression fails on defensive copy and template chrome before it fails on stack choice."
+  - "Accessibility and contrast from the start beat a late polish pass."
+  - "Agent-readable files do not replace organic discovery. They make citations accurate once someone (or an agent) already lands on the domain."
+featured: true
+order: 20
+---

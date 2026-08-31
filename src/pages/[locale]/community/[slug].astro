@@ -1,0 +1,501 @@
+---
+/**
+ * Community event detail
+ *
+ * Route: /[locale]/community/[slug]
+ */
+
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import SEO from "../../../components/SEO.astro";
+import StructuredData from "../../../components/StructuredData.astro";
+import BackLink from "../../../components/BackLink.astro";
+import ReaderFeed from "../../../components/ReaderFeed.astro";
+import { Image, getImage } from "astro:assets";
+import { getCollection, getEntry, render } from "astro:content";
+import { siteConfig } from "../../../config";
+import { htmlLang, withLocale } from "../../../i18n/config";
+import { localeFromParams, localeStaticPaths } from "../../../i18n/utils";
+import { getUi } from "../../../i18n/ui";
+import { localizeSpeaking } from "../../../i18n/content/localize";
+
+export async function getStaticPaths() {
+  const talks = await getCollection("speaking");
+  return localeStaticPaths().flatMap(({ params: { locale } }) =>
+    talks.map((talk) => ({
+      params: { locale, slug: talk.id },
+    })),
+  );
+}
+
+const locale = localeFromParams(Astro.params.locale);
+const ui = getUi(locale);
+const { slug } = Astro.params;
+
+const talk = await getEntry("speaking", slug!);
+
+if (!talk) {
+  return Astro.redirect("/404");
+}
+
+const { Content } = await render(talk);
+const localized = localizeSpeaking(
+  talk.id,
+  talk.data as Record<string, unknown>,
+  locale,
+);
+const data = localized.data as typeof talk.data;
+const localizedBody = localized.body;
+
+const {
+  title,
+  description,
+  event,
+  eventUrl,
+  date,
+  location,
+  type,
+  slides,
+  video,
+  duration,
+  topics = [],
+  image,
+  gallery = [],
+} = data;
+
+const formattedDate = new Intl.DateTimeFormat(htmlLang[locale], {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+}).format(date);
+
+const typeLabel = ui.communityDetail.types[type];
+
+const allTalks = await getCollection("speaking");
+const readerItems = [...allTalks]
+  .map((entry) => {
+    const localized = localizeSpeaking(
+      entry.id,
+      entry.data as Record<string, unknown>,
+      locale,
+    );
+    const entryData = localized.data as typeof entry.data;
+    return {
+      slug: entry.id,
+      title: entryData.title,
+      url: withLocale(locale, `/community/${entry.id}`),
+      date: entryData.date.getTime(),
+    };
+  })
+  .sort((a, b) => b.date - a.date)
+  .map(({ slug, title, url }) => ({ slug, title, url }));
+
+const pageTitle = `${title} · ${event}`;
+const pageUrl = new URL(
+  withLocale(locale, `/community/${talk.id}`),
+  siteConfig.url,
+).href;
+
+const bodyParagraphs = localizedBody
+  ? localizedBody.split(/\n\n+/).filter(Boolean)
+  : [];
+
+let ogImage: string | undefined;
+let ogWidth = 1200;
+let ogHeight = 630;
+let ogType = "image/png";
+if (image) {
+  const optimized = await getImage({ src: image, width: 1200 });
+  ogImage = new URL(optimized.src, siteConfig.url).href;
+  ogWidth = Number(optimized.attributes.width) || 1200;
+  ogHeight = Number(optimized.attributes.height) || 630;
+  if (optimized.src.includes(".webp")) ogType = "image/webp";
+  else if (optimized.src.includes(".jpg") || optimized.src.includes(".jpeg"))
+    ogType = "image/jpeg";
+  else if (optimized.src.includes(".png")) ogType = "image/png";
+}
+---
+
+<BaseLayout locale={locale}>
+  <SEO
+    slot="head"
+    locale={locale}
+    pathWithoutLocale={`/community/${talk.id}`}
+    title={pageTitle}
+    description={description}
+    type="article"
+    image={ogImage}
+    imageAlt={`${title} · ${event}`}
+    imageWidth={ogWidth}
+    imageHeight={ogHeight}
+    imageType={ogType}
+    publishDate={date}
+    section={ui.communityDetail.sectionCommunity}
+    tags={topics}
+  />
+
+  <StructuredData
+    locale={locale}
+    type="Event"
+    data={{
+      title,
+      description,
+      event,
+      eventUrl,
+      date,
+      location,
+      type,
+      image: ogImage,
+      url: pageUrl,
+      topics,
+    }}
+  />
+
+  <StructuredData
+    locale={locale}
+    type="Article"
+    data={{
+      title: pageTitle,
+      description,
+      publishDate: date,
+      image: ogImage,
+      url: pageUrl,
+      tags: topics,
+    }}
+  />
+
+  <StructuredData
+    locale={locale}
+    type="BreadcrumbList"
+    data={{
+      items: [
+        { name: ui.pages.community.breadcrumbHome, url: withLocale(locale, "/") },
+        {
+          name: ui.pages.community.breadcrumbCommunity,
+          url: withLocale(locale, "/community"),
+        },
+        {
+          name: title,
+          url: withLocale(locale, `/community/${talk.id}`),
+        },
+      ],
+    }}
+  />
+
+  <ReaderFeed
+    items={readerItems}
+    currentSlug={talk.id}
+    indexHref={withLocale(locale, "/community")}
+    indexLabel={ui.reader.backTalks}
+    continueLabel={ui.reader.continueTalk}
+    nextLabel={ui.reader.nextTalk}
+    positionTemplate={ui.reader.position}
+  >
+  <article
+    class="talk-detail"
+    data-reader-article
+    data-reader-slug={talk.id}
+    data-reader-title={title}
+    data-reader-url={withLocale(locale, `/community/${talk.id}`)}
+  >
+    <div class="talk-column">
+      <p class="talk-back" data-reader-exclude>
+        <BackLink href={withLocale(locale, "/community")} text={ui.communityDetail.back} />
+      </p>
+
+      <header class="talk-header">
+        <p class="talk-meta">
+          <span class="talk-type">{typeLabel}</span>
+          <span class="talk-meta-sep" aria-hidden="true">·</span>
+          <time datetime={date.toISOString()}>{formattedDate}</time>
+          <span class="talk-meta-sep" aria-hidden="true">·</span>
+          <span>{location}</span>
+          {
+            duration && (
+              <>
+                <span class="talk-meta-sep" aria-hidden="true">
+                  ·
+                </span>
+                <span>{duration}</span>
+              </>
+            )
+          }
+        </p>
+        <h1 class="talk-title">{title}</h1>
+        <p class="talk-event">
+          {
+            eventUrl ? (
+              <a href={eventUrl} target="_blank" rel="noopener noreferrer">
+                {event}
+              </a>
+            ) : (
+              event
+            )
+          }
+        </p>
+        <p class="talk-dek">{description}</p>
+      </header>
+
+      {
+        (gallery.length > 0 || image) && (
+          <div class="talk-media">
+            {
+              (gallery.length > 0 ? gallery : image ? [image] : []).map(
+                (photo, index) => (
+                  <figure class="talk-figure">
+                    <Image
+                      src={photo}
+                      alt={`${title} · ${event}`}
+                      widths={[480, 720, 960]}
+                      sizes="(min-width: 640px) 26rem, calc(100vw - 2rem)"
+                      loading={index === 0 ? "eager" : "lazy"}
+                      fetchpriority={index === 0 ? "high" : undefined}
+                    />
+                  </figure>
+                ),
+              )
+            }
+            <p class="talk-media__caption">
+              {title} · {event}
+            </p>
+          </div>
+        )
+      }
+
+      {
+        localizedBody ? (
+          <div class="talk-body prose">
+            {bodyParagraphs.map((paragraph) => (
+              <p>{paragraph}</p>
+            ))}
+          </div>
+        ) : (
+          <div class="talk-body prose">
+            <Content />
+          </div>
+        )
+      }
+
+      {
+        topics.length > 0 && (
+          <p class="meta-line">
+            {topics.map((topic, i) => (
+              <>
+                {i > 0 && <span class="meta-line__sep" aria-hidden="true"> · </span>}
+                <span>{topic}</span>
+              </>
+            ))}
+          </p>
+        )
+      }
+
+      {
+        (slides || video) && (
+          <div class="talk-actions">
+            {
+              slides && (
+                <a
+                  class="talk-action"
+                  href={slides}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {ui.communityDetail.viewSlides}
+                  <span class="visually-hidden"> {ui.opensNewTab}</span>
+                </a>
+              )
+            }
+            {
+              video && (
+                <a
+                  class="talk-action"
+                  href={video}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {ui.communityDetail.watchVideo}
+                  <span class="visually-hidden"> {ui.opensNewTab}</span>
+                </a>
+              )
+            }
+          </div>
+        )
+      }
+    </div>
+  </article>
+  </ReaderFeed>
+
+  <style>
+    .talk-detail {
+      width: 100%;
+      max-width: var(--max-width-case);
+      margin: 0 auto;
+      padding: 1.5rem var(--pad-case-inline) 2rem;
+      box-sizing: border-box;
+    }
+
+    .talk-column {
+      width: 100%;
+      max-width: min(100%, 52rem);
+      margin: 0 auto;
+    }
+
+    .talk-back {
+      margin: 0 0 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .talk-back {
+        display: none;
+      }
+    }
+
+    .talk-header {
+      margin-bottom: 1.75rem;
+    }
+
+    .talk-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.35rem 0.5rem;
+      margin: 0 0 0.85rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+    }
+
+    .talk-type {
+      color: var(--color-accent);
+    }
+
+    .talk-meta-sep {
+      opacity: 0.55;
+    }
+
+    .talk-title {
+      font-family: var(--font-display);
+      font-size: clamp(1.75rem, 3.5vw, 2.35rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin: 0 0 0.65rem;
+      color: var(--color-text);
+      text-wrap: balance;
+    }
+
+    .talk-event {
+      margin: 0 0 0.85rem;
+      font-size: 1.0625rem;
+      font-weight: 600;
+      color: var(--color-text);
+    }
+
+    .talk-event a {
+      color: inherit;
+      text-decoration: underline;
+      text-underline-offset: 0.18em;
+    }
+
+    .talk-dek {
+      margin: 0;
+      font-size: 1.0625rem;
+      line-height: 1.6;
+      color: var(--color-text-secondary);
+    }
+
+    .talk-media {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem 1.1rem;
+      margin: 0 0 2rem;
+    }
+
+    .talk-figure {
+      margin: 0;
+      min-width: 0;
+    }
+
+    .talk-figure :global(img) {
+      display: block;
+      width: 100%;
+      aspect-ratio: 4 / 5;
+      height: auto;
+      object-fit: cover;
+      object-position: center top;
+      border: 1px solid var(--color-border);
+      background: var(--color-bg-secondary);
+    }
+
+    .talk-media__caption {
+      grid-column: 1 / -1;
+      margin: 0;
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      letter-spacing: 0.04em;
+      line-height: 1.45;
+      color: var(--color-text-muted);
+    }
+
+    @media (min-width: 640px) {
+      .talk-media {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .talk-body {
+      margin-bottom: 1.75rem;
+      /* Column already sets the measure; ignore global .prose 65ch cap. */
+      max-width: none;
+    }
+
+    .talk-body :global(p) {
+      font-size: 1.0625rem;
+      line-height: 1.7;
+      color: var(--color-text-secondary);
+      margin: 0 0 1.1rem;
+    }
+
+    .talk-body :global(p:last-child) {
+      margin-bottom: 0;
+    }
+
+    .talk-column :global(.meta-line) {
+      margin-bottom: 1.75rem;
+    }
+
+    .talk-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.25rem;
+    }
+
+    .talk-action {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+
+    .talk-action:hover,
+    .talk-action:focus-visible {
+      text-decoration: underline;
+      text-underline-offset: 0.18em;
+      color: var(--color-accent-hover);
+    }
+
+    .talk-action:focus-visible {
+      outline: var(--focus-ring-width) solid var(--focus-ring-color);
+      outline-offset: var(--focus-ring-offset);
+    }
+
+    @media (max-width: 640px) {
+      .talk-detail {
+        padding-top: 1.25rem;
+        padding-bottom: 2rem;
+      }
+    }
+  </style>
+</BaseLayout>

@@ -1,0 +1,539 @@
+---
+/**
+ * TalkCard — community talk row / compact secondary folio.
+ * Rhythm: badge → date · place → title → event → dek → CTA.
+ * Empty kickers reserve height; compact grid stretches CTA to a shared baseline.
+ */
+import BaseCard from "./BaseCard.astro";
+import ForwardLink from "./ForwardLink.astro";
+import { Image } from "astro:assets";
+import { defaultLocale, htmlLang, withLocale, type AppLocale } from "../i18n/config";
+
+interface Props {
+  title: string;
+  description: string;
+  event: string;
+  eventUrl?: string;
+  date: Date;
+  location: string;
+  type:
+    | "conference"
+    | "meetup"
+    | "podcast"
+    | "workshop"
+    | "webinar"
+    | "mentoring"
+    | "talk";
+  slides?: string;
+  video?: string;
+  duration?: string;
+  topics?: string[];
+  image?: any;
+  featured?: boolean;
+  /** Denser secondary row under a year lead */
+  compact?: boolean;
+  id?: string;
+  /** Content collection id → /community/[slug] */
+  slug: string;
+  locale?: AppLocale;
+  readMoreLabel?: string;
+  opensNewTabLabel?: string;
+  typeLabels?: Record<string, string>;
+  readAboutLabel?: string;
+  viewSlidesLabel?: string;
+  watchVideoLabel?: string;
+}
+
+const {
+  title,
+  description,
+  event,
+  date,
+  location,
+  type,
+  slides,
+  video,
+  duration,
+  image,
+  topics = [],
+  compact = false,
+  id,
+  slug,
+  locale = defaultLocale,
+  readMoreLabel = "Read more",
+  opensNewTabLabel = "(opens in a new tab)",
+  viewSlidesLabel = "View slides",
+  watchVideoLabel = "Watch video",
+  typeLabels = {
+    conference: "Conference",
+    meetup: "Meetup",
+    podcast: "Podcast",
+    workshop: "Workshop",
+    webinar: "Webinar",
+    mentoring: "Mentoring",
+    talk: "Talk",
+  },
+} = Astro.props;
+
+const formattedDate = compact
+  ? new Intl.DateTimeFormat(htmlLang[locale], {
+      month: "short",
+      day: "numeric",
+    }).format(date)
+  : new Intl.DateTimeFormat(htmlLang[locale], {
+      year: "numeric",
+      month: "short",
+    }).format(date);
+
+const detailHref = withLocale(locale, `/community/${slug}`);
+---
+
+<BaseCard href={undefined} class:list={["talk-card", { "talk-card--compact": compact }]} id={id}>
+  {
+    image && (
+      <div slot="image" class="card-image">
+        <a href={detailHref} class="card-image-link" tabindex="-1" aria-hidden="true">
+          <Image
+            src={image}
+            alt=""
+            loading="lazy"
+            widths={compact ? [360, 480, 640, 800] : [240, 360, 480, 720]}
+            sizes={
+              compact
+                ? "(min-width: 900px) 28vw, min(100vw - 2rem, 36rem)"
+                : "(min-width: 720px) 288px, min(100vw - 2rem, 28rem)"
+            }
+          />
+        </a>
+      </div>
+    )
+  }
+
+  {/* Badge above date · place — same stack as TalkLead (no wrap lottery) */}
+  <div slot="badge" class="card-badges">
+    <span class="badge badge--type" data-type={type}>{typeLabels[type]}</span>
+    <span class="talk-meta-text">{formattedDate} · {location}</span>
+  </div>
+
+  <a slot="title" class="talk-title-link" href={detailHref}>{title}</a>
+
+  <div slot="description" class="talk-body-copy">
+    <div class="event-venue">
+      <span class="venue-name">{event}</span>
+      {duration && !compact && <span class="venue-separator">·</span>}
+      {duration && !compact && <span class="venue-duration">{duration}</span>}
+    </div>
+    <p class="talk-dek">{description}</p>
+  </div>
+
+  <div slot="tags" class="talk-tags">
+    {
+      !compact && topics.length > 0 && (
+        <p class="meta-line">
+          {topics.map((topic, i) => (
+            <>
+              {i > 0 && <span class="meta-line__sep" aria-hidden="true"> · </span>}
+              <span>{topic}</span>
+            </>
+          ))}
+        </p>
+      )
+    }
+
+    <ForwardLink text={readMoreLabel} href={detailHref} class="talk-cta" />
+  </div>
+
+  {
+    !compact && (slides || video) && (
+      <div class="talk-footer">
+        {slides && (
+          <a
+            class="footer-link"
+            href={slides}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              aria-hidden="true"
+            >
+              <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM12 8v4l3 3" />
+            </svg>
+            {viewSlidesLabel}
+            <span class="visually-hidden"> {opensNewTabLabel}</span>
+          </a>
+        )}
+        {video && (
+          <a
+            class="footer-link"
+            href={video}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              aria-hidden="true"
+            >
+              <polygon points="5 3 19 12 5 21 5 3" />
+            </svg>
+            {watchVideoLabel}
+            <span class="visually-hidden"> {opensNewTabLabel}</span>
+          </a>
+        )}
+      </div>
+    )
+  }
+</BaseCard>
+
+<style>
+  /*
+    TalkCard passes class="talk-card" into BaseCard. Astro scopes the root to
+    BaseCard's cid only, so unscoped :global(.talk-card) is required for layout.
+  */
+  :global(.talk-card) {
+    padding-bottom: 2.75rem;
+    margin-bottom: 0.75rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  :global(.talk-card .card-image) {
+    border-bottom: none;
+    margin-bottom: 1.15rem;
+    aspect-ratio: 16 / 10;
+    max-height: 16rem;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-secondary);
+  }
+
+  :global(.talk-card--compact) {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    align-content: stretch;
+    height: 100%;
+    min-width: 0;
+    overflow: visible;
+    padding-bottom: 2rem;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Secondary column stories: photo above type — NYT-style folio. */
+  :global(.talk-card--compact .card-image) {
+    width: 100%;
+    margin-bottom: 0.95rem;
+    max-height: none;
+    aspect-ratio: 16 / 10;
+  }
+
+  :global(.talk-card--compact .card-content) {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+  }
+
+  .card-image-link {
+    display: block;
+    width: 100%;
+    height: 100%;
+    color: inherit;
+  }
+
+  :global(.talk-card .card-image img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+  }
+
+  :global(.talk-card .card-content) {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  :global(.talk-card .card-header) {
+    min-height: var(--teaser-kicker-min-h);
+    margin-bottom: var(--teaser-kicker-gap);
+  }
+
+  :global(.talk-card--compact .card-header) {
+    margin-bottom: var(--teaser-kicker-gap);
+  }
+
+  .card-badges {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+
+  .talk-meta-text {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    line-height: 1.45;
+    color: var(--color-text-muted);
+  }
+
+  .talk-title-link {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .talk-title-link:hover,
+  .talk-title-link:focus-visible {
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+    text-decoration-thickness: 1.5px;
+    text-decoration-color: color-mix(in srgb, var(--color-text) 70%, transparent);
+  }
+
+  .talk-title-link:focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
+    border-radius: 2px;
+  }
+
+  :global(.talk-card .card-title) {
+    margin-bottom: var(--teaser-title-gap);
+    font-size: 1.25rem;
+    line-height: 1.3;
+    max-width: 36rem;
+  }
+
+  :global(.talk-card--compact .card-title) {
+    font-family: var(--font-display);
+    font-size: clamp(1.15rem, 1.8vw, 1.35rem);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.25;
+    margin-bottom: var(--teaser-title-gap);
+    max-width: 28rem;
+    text-wrap: unset;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  :global(.talk-card .card-description) {
+    margin-bottom: 0;
+    font-size: inherit;
+    line-height: inherit;
+    color: inherit;
+    max-width: 36rem;
+  }
+
+  .talk-body-copy {
+    display: flex;
+    flex-direction: column;
+    gap: var(--teaser-event-gap);
+    max-width: 36rem;
+  }
+
+  .talk-dek {
+    margin: 0;
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    color: var(--color-text-secondary);
+  }
+
+  :global(.talk-card--compact .talk-dek) {
+    font-size: 0.875rem;
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  @media (min-width: 900px) {
+    :global(.talk-card--compact .card-title) {
+      min-height: calc(1.25em * 2);
+    }
+
+    :global(.talk-card--compact .talk-dek) {
+      min-height: calc(1.45em * 2);
+    }
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.625rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--border-radius-sm);
+    background: var(--color-bg-secondary);
+    border: none;
+  }
+
+  .badge--type[data-type="conference"],
+  .badge--type[data-type="meetup"],
+  .badge--type[data-type="podcast"],
+  .badge--type[data-type="webinar"],
+  .badge--type[data-type="workshop"],
+  .badge--type[data-type="mentoring"],
+  .badge--type[data-type="talk"] {
+    color: var(--color-accent);
+    background: var(--color-accent-muted);
+    border: 1px solid color-mix(in srgb, var(--color-accent) 35%, var(--color-border));
+  }
+
+  .talk-tags {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.65rem;
+    margin-top: auto;
+    padding-top: var(--teaser-cta-pad);
+    margin-bottom: 0;
+    max-width: 36rem;
+  }
+
+  :global(.talk-card--compact .talk-tags) {
+    gap: 0.4rem;
+    width: 100%;
+  }
+
+  :global(.talk-card--compact .talk-tags .meta-line) {
+    width: 100%;
+    max-width: 100%;
+    min-height: 1.45em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .talk-cta {
+    margin: 0;
+  }
+
+  .event-venue {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0;
+  }
+
+  :global(.talk-card--compact .event-venue) {
+    display: block;
+    font-size: 0.8125rem;
+    line-height: 1.35;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  :global(.talk-card--compact .venue-name) {
+    display: inline;
+  }
+
+  .venue-name {
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  .venue-separator {
+    color: var(--color-text-muted);
+  }
+
+  .venue-duration {
+    font-size: 0.8125rem;
+    color: var(--color-text-muted);
+  }
+
+  .talk-footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    padding-top: 0.85rem;
+    margin-top: 0.15rem;
+  }
+
+  .footer-link {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-accent);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    text-decoration: none;
+    transition: color 0.2s ease;
+    min-height: 2.75rem;
+    padding: 0.35rem 0;
+  }
+
+  .footer-link:hover,
+  .footer-link:focus-visible {
+    color: var(--color-accent-hover);
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+  }
+
+  .footer-link:focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
+  }
+
+  .footer-link svg {
+    opacity: 0.85;
+    flex-shrink: 0;
+  }
+
+  @media (min-width: 720px) {
+    :global(.base-card.talk-card:not(.talk-card--compact)) {
+      display: grid;
+      grid-template-columns: minmax(18rem, 22rem) minmax(0, 1fr);
+      column-gap: 2.25rem;
+      align-items: start;
+      padding-bottom: 3.25rem;
+      margin-bottom: 1rem;
+    }
+
+    :global(.talk-card:not(.talk-card--compact) .card-image) {
+      grid-column: 1;
+      grid-row: 1;
+      margin-bottom: 0;
+      max-height: none;
+      width: 100%;
+      aspect-ratio: 4 / 3;
+    }
+
+    :global(.talk-card:not(.talk-card--compact) .card-content) {
+      grid-column: 2;
+      min-width: 0;
+      max-width: 36rem;
+      padding-top: 0;
+    }
+  }
+
+  @media (max-width: 719px) {
+    :global(.talk-card:not(.talk-card--compact) .card-image) {
+      max-width: 100%;
+      max-height: 18rem;
+    }
+  }
+</style>

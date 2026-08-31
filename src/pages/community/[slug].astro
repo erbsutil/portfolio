@@ -1,0 +1,15 @@
+---
+/**
+ * Legacy URL → /en/community/[slug] (301)
+ */
+import { getCollection } from "astro:content";
+
+export async function getStaticPaths() {
+  const talks = await getCollection("speaking");
+  return talks.map((talk) => ({
+    params: { slug: talk.id },
+  }));
+}
+
+return Astro.redirect(`/en/community/${Astro.params.slug}/`, 301);
+---

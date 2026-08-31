@@ -1,0 +1,226 @@
+---
+/**
+ * BaseLayout
+ *
+ * Core HTML shell: nav, footer, theme boot, self-hosted fonts.
+ * Locale-aware lang + chrome.
+ */
+
+import Navigation from "../components/Navigation.astro";
+import Footer from "../components/Footer.astro";
+import Analytics from "@vercel/analytics/astro";
+import { siteConfig } from "../config";
+import {
+  defaultLocale,
+  htmlLang,
+  type AppLocale,
+} from "../i18n/config";
+import { getUi } from "../i18n/ui";
+import "../styles/global.css";
+import "../styles/typography.css";
+import "../styles/utilities.css";
+
+import plexSans400 from "@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-400-normal.woff2?url";
+import plexSerif700 from "@fontsource/ibm-plex-serif/files/ibm-plex-serif-latin-700-normal.woff2?url";
+
+interface Props {
+  locale?: AppLocale;
+}
+
+const { locale = defaultLocale } = Astro.props;
+const ui = getUi(locale);
+const gaId = siteConfig.googleAnalyticsId;
+const openAiAdsPixelId = siteConfig.openAiAdsPixelId;
+---
+
+<!doctype html>
+<html lang={htmlLang[locale]} data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="generator" content={Astro.generator} />
+    <meta
+      name="google-site-verification"
+      content="2WmM-xoT0lasQhNUqngukuz_5feQxljpGmApW7UKMks"
+    />
+
+    <slot name="head" />
+
+    <link
+      rel="preload"
+      href={plexSans400}
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href={plexSerif700}
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="mask-icon" href="/favicon.svg" color="#14201c" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#eef1ee" />
+
+    <Analytics />
+
+    {
+      openAiAdsPixelId && (
+        <script is:inline define:vars={{ openAiAdsPixelId }}>
+          // OpenAI Ads measurement pixel (ChatGPT Ads). Load early so oppref
+          // from ad landing URLs is captured; SDK itself stays async.
+          (function (w, d, s, u, pixelId) {
+            if (w.oaiq) return;
+            var q = function () {
+              q.q.push(arguments);
+            };
+            q.q = [];
+            w.oaiq = q;
+            var js = d.createElement(s);
+            js.async = true;
+            js.src = u;
+            var f = d.getElementsByTagName(s)[0];
+            f.parentNode.insertBefore(js, f);
+            oaiq("init", { pixelId: pixelId });
+            oaiq("measure", "page_view", {
+              contents: [
+                {
+                  name: d.title || location.pathname,
+                  content_type: "page",
+                },
+              ],
+            });
+          })(
+            window,
+            document,
+            "script",
+            "https://bzrcdn.openai.com/sdk/oaiq.min.js",
+            openAiAdsPixelId,
+          );
+        </script>
+      )
+    }
+
+    {
+      gaId && (
+        <script is:inline define:vars={{ gaId }}>
+          // Capture landing referrer before idle boot so deferred gtag still
+          // attributes AI / external referrals (ChatGPT, Perplexity, etc.).
+          window.__gaLandingReferrer = document.referrer || "";
+          window.addEventListener("load", () => {
+            const boot = () => {
+              if (window.__gaBooted) return;
+              window.__gaBooted = true;
+              const s = document.createElement("script");
+              s.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
+              s.async = true;
+              s.onload = () => {
+                window.dataLayer = window.dataLayer || [];
+                function gtag() {
+                  dataLayer.push(arguments);
+                }
+                window.gtag = gtag;
+                const config = {
+                  anonymize_ip: true,
+                  send_page_view: true,
+                };
+                if (window.__gaLandingReferrer) {
+                  config.page_referrer = window.__gaLandingReferrer;
+                }
+                gtag("js", new Date());
+                gtag("config", gaId, config);
+              };
+              document.head.appendChild(s);
+            };
+            if ("requestIdleCallback" in window) {
+              requestIdleCallback(boot, { timeout: 4000 });
+            } else {
+              setTimeout(boot, 2000);
+            }
+          });
+        </script>
+      )
+    }
+
+    <!-- Prevent flash of wrong theme: light is site default -->
+    <script is:inline>
+      (function () {
+        const stored = localStorage.getItem("theme");
+        const theme =
+          stored === "light" || stored === "dark" ? stored : "light";
+        document.documentElement.setAttribute("data-theme", theme);
+        document.documentElement.style.colorScheme = theme;
+        const meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) {
+          meta.setAttribute(
+            "content",
+            theme === "dark" ? "#0c0f0e" : "#eef1ee",
+          );
+        }
+      })();
+    </script>
+
+    <style>
+      body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+
+      .page-body {
+        flex: 1;
+        width: 100%;
+        padding-top: var(--space-md);
+      }
+
+      main {
+        outline: none;
+        scroll-margin-top: calc(var(--site-header-height) + var(--space-md));
+      }
+
+      .site-header {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      .skip-nav {
+        position: absolute;
+        top: -100%;
+        left: 1rem;
+        z-index: 999;
+        padding: 0.5rem 1rem;
+        background: var(--color-accent);
+        color: #fff;
+        font-size: 0.875rem;
+        font-weight: 600;
+        border-radius: var(--border-radius-md);
+        text-decoration: none;
+        transition: top 0.15s ease;
+      }
+
+      .skip-nav:focus,
+      .skip-nav:focus-visible {
+        top: 0.75rem;
+      }
+    </style>
+  </head>
+  <body>
+    <a href="#main-content" class="skip-nav">{ui.skipToContent}</a>
+    <header class="site-header">
+      <Navigation locale={locale} />
+    </header>
+    <div class="page-body">
+      <main id="main-content" tabindex="-1">
+        <slot />
+      </main>
+    </div>
+    <Footer locale={locale} />
+  </body>
+</html>

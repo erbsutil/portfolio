@@ -1,0 +1,327 @@
+---
+/**
+ * Projects Index Page — editorial year folios: photo lead only when a
+ * real cover exists; otherwise a two-column newspaper grid (no fake initials).
+ *
+ * Route: /[locale]/projects
+ */
+
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import SEO from "../../../components/SEO.astro";
+import StructuredData from "../../../components/StructuredData.astro";
+import ProjectCard from "../../../components/ProjectCard.astro";
+import CaseLead from "../../../components/CaseLead.astro";
+import { getCollection } from "astro:content";
+import { withLocale } from "../../../i18n/config";
+import { localeFromParams, localeStaticPaths } from "../../../i18n/utils";
+import { getUi } from "../../../i18n/ui";
+import { localizeProjectData } from "../../../i18n/content/localize";
+import { getCaseCover } from "../../../lib/caseCovers";
+
+export function getStaticPaths() {
+  return localeStaticPaths();
+}
+
+const locale = localeFromParams(Astro.params.locale);
+const ui = getUi(locale);
+
+const allProjects = await getCollection("projects");
+
+const sortedProjects = allProjects
+  .map((project) => ({
+    ...project,
+    data: localizeProjectData(
+      project.id,
+      project.data as Record<string, unknown>,
+      locale,
+    ) as typeof project.data,
+  }))
+  .sort((a, b) => {
+    const y = b.data.year - a.data.year;
+    if (y !== 0) return y;
+    return (a.data.order ?? 999) - (b.data.order ?? 999);
+  });
+
+type ProjectEntry = (typeof sortedProjects)[number];
+
+const projectsByYear = sortedProjects.reduce(
+  (acc, project) => {
+    const year = project.data.year;
+    if (!acc[year]) acc[year] = [];
+    acc[year].push(project);
+    return acc;
+  },
+  {} as Record<number, ProjectEntry[]>,
+);
+
+const years = Object.keys(projectsByYear)
+  .map(Number)
+  .sort((a, b) => b - a);
+
+/** Photo lead only — no empty folio for years without screenshots. */
+function yearPhotoLead(projects: ProjectEntry[]): ProjectEntry | undefined {
+  return projects.find((p) => getCaseCover(p.id));
+}
+
+const listItems = sortedProjects.map((project) => ({
+  name: project.data.title,
+  url: withLocale(locale, `/projects/${project.id}`),
+  description: project.data.outcomeSummary,
+}));
+
+const statusLabels = {
+  completed: ui.caseStudy.statusCompleted,
+  ongoing: ui.caseStudy.statusOngoing,
+  archived: ui.caseStudy.statusArchived,
+};
+---
+
+<BaseLayout locale={locale}>
+  <SEO
+    slot="head"
+    locale={locale}
+    pathWithoutLocale="/projects"
+    title={ui.pages.projects.title}
+    description={ui.pages.projects.description}
+    type="website"
+    imageAlt={`${ui.pages.projects.title} · Erick Sutil`}
+  />
+
+  <StructuredData
+    locale={locale}
+    type="ItemList"
+    data={{
+      name: ui.pages.projects.title,
+      description: ui.pages.projects.description,
+      items: listItems,
+    }}
+  />
+
+  <StructuredData
+    locale={locale}
+    type="BreadcrumbList"
+    data={{
+      items: [
+        { name: ui.pages.projects.breadcrumbHome, url: withLocale(locale, "/") },
+        {
+          name: ui.pages.projects.breadcrumbCases,
+          url: withLocale(locale, "/projects"),
+        },
+      ],
+    }}
+  />
+
+  <div class="page-container">
+    <header class="page-header">
+      <h1 class="page-title">{ui.pages.projects.heading}</h1>
+      <p class="page-intro">
+        {ui.pages.projects.intro}
+      </p>
+    </header>
+
+    {
+      years.length > 0 ? (
+        <div class="projects-by-year">
+          {years.map((year) => {
+            const projects = projectsByYear[year];
+            const lead = yearPhotoLead(projects);
+            const rest = lead
+              ? projects.filter((p) => p.id !== lead.id)
+              : projects;
+            const leadCover = lead ? getCaseCover(lead.id) : undefined;
+
+            return (
+              <section class="year-section">
+                <h2 class="year-heading">{year}</h2>
+
+                {lead && leadCover && (
+                  <div class="year-lead">
+                    <CaseLead
+                      title={lead.data.title}
+                      href={withLocale(locale, `/projects/${lead.id}`)}
+                      summary={lead.data.outcomeSummary}
+                      year={lead.data.year}
+                      cover={leadCover}
+                      viewLabel={ui.cards.viewCase}
+                      featuredLabel={ui.caseStudy.featured}
+                      featured={lead.data.isMeta === true}
+                      size="list"
+                    />
+                  </div>
+                )}
+
+                {rest.length > 0 && (
+                  <div class:list={["cases-grid", { "cases-grid--after-lead": !!lead }]}>
+                    {rest.map((project) => (
+                      <ProjectCard
+                        locale={locale}
+                        title={project.data.title}
+                        slug={project.id}
+                        outcomeSummary={project.data.outcomeSummary}
+                        year={project.data.year}
+                        techStack={project.data.techStack}
+                        featured={project.data.featured}
+                        status={project.data.status}
+                        isMeta={project.data.isMeta}
+                        viewLabel={ui.cards.viewCase}
+                        featuredLabel={ui.caseStudy.featured}
+                        moreTechLabel={ui.cards.moreTechnologies}
+                        statusLabels={statusLabels}
+                        cover={getCaseCover(project.id)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
+            );
+          })}
+        </div>
+      ) : (
+        <p class="empty-state">{ui.pages.projects.empty}</p>
+      )
+    }
+  </div>
+  <style>
+    .projects-by-year {
+      display: flex;
+      flex-direction: column;
+      gap: 2.15rem;
+    }
+
+    .year-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .year-heading {
+      /* type + hairline from utilities.css */
+      margin: 0 0 0.35rem;
+    }
+
+    .year-lead {
+      padding: 0 0 1.5rem;
+      margin-bottom: 0.35rem;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .cases-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .cases-grid--after-lead {
+      margin-top: 0.5rem;
+      padding-top: 0.25rem;
+    }
+
+    .cases-grid :global(.project-card) {
+      padding: 0.35rem 0 1.2rem;
+      border-bottom: 1px solid var(--color-border-subtle);
+    }
+
+    .cases-grid--after-lead :global(.project-card) {
+      padding-top: 1rem;
+    }
+
+    .cases-grid :global(.project-card:last-child) {
+      border-bottom: none;
+      padding-bottom: 0.1rem;
+    }
+
+    @media (min-width: 900px) {
+      .cases-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        column-gap: 2.25rem;
+        row-gap: 0.35rem;
+        column-rule: 1px solid var(--color-border-subtle);
+        align-items: stretch;
+      }
+
+      .cases-grid :global(a.project-card.base-card) {
+        display: flex;
+        flex-direction: column;
+        align-self: stretch;
+        height: 100%;
+        min-width: 0;
+        padding: 0.25rem 0 1.15rem;
+        margin: 0;
+      }
+
+      .cases-grid--after-lead :global(a.project-card.base-card) {
+        padding-top: 1rem;
+      }
+
+      .cases-grid :global(a.project-card.project-card--thumb) {
+        display: grid;
+        grid-template-columns: 9.5rem minmax(0, 1fr);
+        column-gap: var(--teaser-media-gap);
+        align-items: stretch;
+      }
+
+      .cases-grid :global(.project-card .card-content) {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        height: 100%;
+        min-height: 100%;
+      }
+
+      .cases-grid :global(.project-card .case-rail) {
+        margin-top: auto;
+      }
+
+      /* Solo (or trailing odd) item: full row, use the width */
+      .cases-grid > :last-child:nth-child(odd) {
+        grid-column: 1 / -1;
+        max-width: none;
+        height: auto;
+      }
+
+      .cases-grid :global(.project-card:nth-last-child(-n + 2)) {
+        border-bottom: none;
+      }
+
+      .cases-grid :global(.project-card .card-title) {
+        font-family: var(--font-display);
+        font-size: 1.15rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        line-height: 1.3;
+        max-width: none;
+        text-wrap: unset;
+        min-height: calc(1.3em * 2);
+      }
+
+      .cases-grid :global(.project-card .card-description) {
+        min-height: calc(1.55em * 3);
+      }
+
+      .cases-grid :global(.project-card .meta-line) {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .projects-by-year {
+        gap: 2.25rem;
+      }
+
+      .year-lead {
+        padding-bottom: 1.15rem;
+      }
+
+      .cases-grid :global(.project-card) {
+        padding: 0.5rem 0 1.45rem;
+      }
+
+      .cases-grid--after-lead :global(.project-card) {
+        padding-top: 1.15rem;
+      }
+    }
+  </style>
+</BaseLayout>

@@ -1,0 +1,55 @@
+---
+title: "B2B registration: Company signup as a microfrontend, cut over after A/B"
+role: "Senior Frontend Engineer"
+year: 2025
+outcomeSummary: "Isolated the funnel, ran Unleash against the live flow, promoted when drop-off improved."
+overview: "With product and backend, I rebuilt a high-friction company registration flow as a microfrontend on the existing Storybook design system. We ran it against the live flow with Unleash before promoting it. Goal: fewer steps, same data, no broken funnel."
+problem: "The legacy registration flow had extra steps that caused drop-offs before companies finished their profiles. The monolith was also hard to maintain and out of step with the component patterns used on newer B2B products."
+constraints:
+  - "Had to run beside the live flow during the A/B test, not as a hard cutover."
+  - "The new flow had to beat the old one on conversion before we promoted it."
+  - "Shared Storybook design system was the UI source of truth. No parallel component library."
+approach: "Rebuilt registration as a standalone microfrontend and removed unnecessary steps. UI came from the shared Storybook system. Unleash split traffic between old and new. When conversion favored the new version, it became the default."
+keyDecisions:
+  - decision: "A/B test via Unleash instead of direct cutover"
+    reasoning: "Registration is a conversion-critical path. Real traffic decided which design won."
+    alternatives:
+      - "Switch everyone at once behind a feature flag, with no A/B traffic split (rejected: no conversion proof)"
+      - "Gradual CSS restyle of the monolith form (rejected: did not fix step count or deploy coupling)"
+  - decision: "Microfrontend plus shared design system"
+    reasoning: "Independent from the monolith for faster iteration. Reusing Storybook components kept focus on flow and logic, not rebuilding UI."
+    alternatives:
+      - "Rebuild inside the monolith (rejected: slower iteration, higher blast radius)"
+      - "Greenfield UI kit for this flow only (rejected: duplicate tokens and drift)"
+  - decision: "Tailwind for styling speed against the existing system"
+    reasoning: "Tailwind was already the design-system standard. Layout iteration stayed inside that system instead of inventing a parallel CSS approach."
+    alternatives:
+      - "Hand-written CSS modules (slower against an existing Tailwind system)"
+techStack:
+  - "React"
+  - "TypeScript"
+  - "Astro"
+  - "Tailwind CSS"
+  - "Storybook"
+  - "Unleash (A/B Testing)"
+  - "Jest"
+  - "React Testing Library"
+impact:
+  metrics:
+    - label: "Rollout method"
+      value: "Unleash A/B → promote winner"
+    - label: "Funnel change"
+      value: "Fewer steps, same required data"
+    - label: "Deploy boundary"
+      value: "Independent microfrontend (not monolith)"
+    - label: "Promotion gate"
+      value: "Live conversion beat legacy before default"
+  qualitative: "The A/B test favored the shorter funnel; we promoted it after conversion beat legacy. Unit tests covered the funnel steps because this path sits on onboarding."
+learnings:
+  - "A/B testing a multi-step funnel is messy because conversion is delayed. That is exactly why real traffic matters more than gut feel."
+  - "A documented design system removes UI as the bottleneck so iteration time went to funnel steps and logic, not rebuilding UI."
+  - "Removing steps we thought were required was the biggest UX win."
+featured: true
+status: "completed"
+order: 1
+---

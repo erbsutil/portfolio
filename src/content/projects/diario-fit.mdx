@@ -1,0 +1,70 @@
+---
+title: "Dieta e Treino: Telegram as the app; the dashboard is a short-lived link"
+role: "Full-stack engineer"
+year: 2026
+status: "completed"
+duration: "Shipped 2026"
+outcomeSummary: "Bun/Windmill bot + Gemini agents; Next.js panel behind RLS; Stripe trial without making the web the home screen."
+overview: "Dieta e Treino started from a simple idea: keep food and training in the chat people already use, then open a panel only when they want the bigger picture. The same bot works in private chat or inside Telegram groups. Meals go through Ana (text, photo, or voice); workouts through Renan. When someone wants day totals, ~70-day consistency, or a light comparison with peers, they ask for the panel and open the link. Day-to-day logging stays in chat; the web app covers aggregated views, marketing, and billing."
+problem: "Memory skews toward extremes. Without a steady record it is hard to see what you actually eat across days, or how training volume and frequency move over time. Consumer diet apps add installs and logins that break the habit before it starts."
+constraints:
+  - "Self-hosted workflow runner for the bot (no managed cloud bill). Production ships as one bundled worker while the repo stays modular."
+  - "Telegram webhook delivery is time-bounded; the handler must finish in time and stay idempotent so retries do not double-write. Shared groups add noise, so heuristics catch food and workouts without requiring a slash command on every line."
+  - "Dashboard access is a short-lived link from the bot. Privileged database access stays server-side. Group ranking is opt-in in the bot, never automatic; peers see aggregates, not meal text."
+  - "Bot and dashboard must agree on each user’s local calendar day. Clock-sensitive UI renders on the client to avoid SSR/hydration mismatch."
+  - "Commercial path mirrors StackBrief (Checkout / Portal / webhooks, 14-day trial without card, soft-block of bot writes after trial) while keeping one Telegram identity = one subscription and privacy rules intact."
+approach: "Telegram triggers a self-hosted Windmill webhook; a bundled Bun job runs the bot. Gemini parses and transcribes; Postgres (Supabase) holds state. The webhook path finishes with a safe response after persist so retries stay clean. The dashboard is Next.js on Vercel with a Portuguese marketing landing (Ana/Renan, pricing, FAQ) and a token-gated panel: macros, heatmaps, training volume, Groups, and subscription. Structured events feed a scheduled quality digest; optional Sentry covers production errors. Lightweight ops alerts stay out of the user path."
+keyDecisions:
+  - decision: "Telegram instead of WhatsApp as the chat surface"
+    reasoning: "People already live in messaging apps; the goal was no new install. Telegram’s Bot API fits a small, iterative product: straightforward webhooks, bots in private chats and groups, and room to change how the bot behaves without a business-console workflow. WhatsApp’s path for comparable automation is heavier (Business API, stricter messaging rules, and cost signals that did not match this product)."
+    alternatives:
+      - "Build on WhatsApp Business API / Cloud API instead (higher ops overhead for this scale and use case)"
+      - "A standalone mobile app (rejected: extra install and separate login)"
+  - decision: "Self-hosted Windmill instead of cloud or a custom Node service"
+    reasoning: "Workflows, retries, and schedules in one place; cost is the box I already have. Tradeoff is ops on that host."
+    alternatives:
+      - "Windmill Cloud or Railway/Fly with hand-rolled workers (extra cost or glue for the same outcome)"
+  - decision: "Named agents (Ana / Renan) instead of a single generic bot voice"
+    reasoning: "Food and training are different intents in chat. Named agents make that split obvious in the bot and on the landing page."
+    alternatives:
+      - "One unnamed assistant for everything (cheaper copy, weaker mental model)"
+  - decision: "Gemini for text, image, and voice; heuristics for group noise"
+    reasoning: "One API key and quota. Keywords and patterns filter the group so we do not call a model on every irrelevant line."
+    alternatives:
+      - "Slash-only commands or a classifier on every message (friction or cost)"
+  - decision: "Productize with Stripe trial + Telegram subscribe path"
+    reasoning: "Early users proved the loop; a public site and paid tier need the same access rules as StackBrief without breaking the bot-first habit. Trial starts on authorize; after trial, soft-block writes while the panel still offers the subscription screen."
+    alternatives:
+      - "Keep the product invite-only with no billing"
+      - "Force web signup before any Telegram use (rejected: breaks the core promise)"
+techStack:
+  - "TypeScript (Bun on Windmill)"
+  - "Windmill (self-hosted)"
+  - "Supabase (PostgreSQL, RLS)"
+  - "Google Gemini"
+  - "Telegram Bot API"
+  - "Next.js (App Router, Server Components)"
+  - "React, Tailwind CSS"
+  - "Stripe Checkout / Portal / Webhooks (BRL)"
+  - "Vercel (landing + dashboard)"
+impact:
+  metrics:
+    - label: "Product outcome"
+      value: "Live bot + panel + billing at dietaetreino.erbsu.com"
+    - label: "Friction removed"
+      value: "Log in Telegram; panel opens from a bot link"
+    - label: "Privacy bar"
+      value: "Groups opt-in; peers see aggregates, not meals"
+    - label: "Commercial path"
+      value: "14-day trial → soft-block writes · R$29/mo"
+  qualitative: "Logging stays in Telegram with no second install or login. Day macros, ~70-day consistency, and training volume open behind a short-lived link; peer comparison only after explicit opt-in. Billing follows trial → Checkout → soft-block while the bot stays the primary surface."
+learnings:
+  - "Tuning who stays silent in a group chat took more iterations than swapping models."
+  - "Duplicated date logic plus a test was more reliable than a shared package we would not maintain."
+  - "Server Components and narrow types do most of the privacy work before the browser runs."
+  - "At this scale, structured events plus a weekly digest beat digging through raw logs for errors and latency."
+  - "Once the loop works, naming and landing copy still have to read as a product, without promising clinical accuracy."
+  - "Billing for a Telegram-first product is mostly access rules; Checkout should not ship ahead of trial and soft-block behavior."
+featured: true
+order: 12
+---

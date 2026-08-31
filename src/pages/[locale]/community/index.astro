@@ -1,0 +1,282 @@
+---
+/**
+ * Community — editorial year folios: one lead story + denser secondary talks.
+ *
+ * Route: /[locale]/community
+ */
+
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import SEO from "../../../components/SEO.astro";
+import StructuredData from "../../../components/StructuredData.astro";
+import TalkCard from "../../../components/TalkCard.astro";
+import TalkLead from "../../../components/TalkLead.astro";
+import { getCollection } from "astro:content";
+import { withLocale } from "../../../i18n/config";
+import { localeFromParams, localeStaticPaths } from "../../../i18n/utils";
+import { getUi } from "../../../i18n/ui";
+import { localizeSpeaking } from "../../../i18n/content/localize";
+
+export function getStaticPaths() {
+  return localeStaticPaths();
+}
+
+const locale = localeFromParams(Astro.params.locale);
+const ui = getUi(locale);
+
+const allTalks = await getCollection("speaking");
+
+const sortedTalks = [...allTalks]
+  .map((talk) => {
+    const { data } = localizeSpeaking(
+      talk.id,
+      talk.data as Record<string, unknown>,
+      locale,
+    );
+    return { ...talk, data: data as typeof talk.data };
+  })
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+
+type TalkEntry = (typeof sortedTalks)[number];
+
+const talksByYear = sortedTalks.reduce(
+  (acc, talk) => {
+    const year = talk.data.date.getFullYear();
+    if (!acc[year]) acc[year] = [];
+    acc[year].push(talk);
+    return acc;
+  },
+  {} as Record<number, TalkEntry[]>,
+);
+
+const years = Object.keys(talksByYear)
+  .map(Number)
+  .sort((a, b) => b - a);
+
+const listItems = sortedTalks.map((talk) => ({
+  name: `${talk.data.title} · ${talk.data.event}`,
+  url: withLocale(locale, `/community/${talk.id}`),
+  description: talk.data.description,
+}));
+
+const typeLabels = ui.communityDetail.types as Record<string, string>;
+---
+
+<BaseLayout locale={locale}>
+  <SEO
+    slot="head"
+    locale={locale}
+    pathWithoutLocale="/community"
+    title={ui.pages.community.title}
+    description={ui.pages.community.description}
+    type="website"
+    imageAlt={`${ui.pages.community.title} · Erick Sutil`}
+  />
+
+  <StructuredData
+    locale={locale}
+    type="ItemList"
+    data={{
+      name: ui.pages.community.itemListName,
+      description: ui.pages.community.description,
+      items: listItems,
+    }}
+  />
+
+  <StructuredData
+    locale={locale}
+    type="BreadcrumbList"
+    data={{
+      items: [
+        { name: ui.pages.community.breadcrumbHome, url: withLocale(locale, "/") },
+        {
+          name: ui.pages.community.breadcrumbCommunity,
+          url: withLocale(locale, "/community"),
+        },
+      ],
+    }}
+  />
+
+  <div class="page-container">
+    <header class="page-header">
+      <h1 class="page-title">{ui.pages.community.heading}</h1>
+      <p class="page-intro page-intro--wide">
+        {ui.pages.community.intro}
+      </p>
+    </header>
+
+    {
+      years.length > 0 ? (
+        <div class="community-timeline">
+          {years.map((year) => {
+            const talks = talksByYear[year];
+            const [lead, ...rest] = talks;
+
+            return (
+              <section class="year-section" aria-labelledby={`year-${year}`}>
+                <h2 class="year-heading" id={`year-${year}`}>
+                  {year}
+                </h2>
+
+                <TalkLead
+                  title={lead.data.title}
+                  description={lead.data.description}
+                  event={lead.data.event}
+                  date={lead.data.date}
+                  location={lead.data.location}
+                  type={lead.data.type}
+                  image={lead.data.image}
+                  href={withLocale(locale, `/community/${lead.id}`)}
+                  locale={locale}
+                  readMoreLabel={ui.cards.readMore}
+                  typeLabel={typeLabels[lead.data.type] ?? lead.data.type}
+                />
+
+                {rest.length > 0 && (
+                  <div class="talks-secondary">
+                    {rest.map((talk) => (
+                      <TalkCard
+                        locale={locale}
+                        slug={talk.id}
+                        title={talk.data.title}
+                        description={talk.data.description}
+                        event={talk.data.event}
+                        eventUrl={talk.data.eventUrl}
+                        date={talk.data.date}
+                        location={talk.data.location}
+                        type={talk.data.type}
+                        slides={talk.data.slides}
+                        video={talk.data.video}
+                        duration={talk.data.duration}
+                        topics={talk.data.topics}
+                        image={talk.data.image}
+                        featured={talk.data.featured}
+                        compact
+                        id={talk.id}
+                        readMoreLabel={ui.cards.readMore}
+                        readAboutLabel={ui.cards.readAbout}
+                        viewSlidesLabel={ui.communityDetail.viewSlides}
+                        watchVideoLabel={ui.communityDetail.watchVideo}
+                        opensNewTabLabel={ui.opensNewTab}
+                        typeLabels={typeLabels}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
+            );
+          })}
+        </div>
+      ) : (
+        <p class="empty-state">{ui.pages.community.empty}</p>
+      )
+    }
+  </div>
+
+  <style>
+    .page-intro--wide {
+      max-width: 42rem;
+    }
+
+    .community-timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 2.75rem;
+    }
+
+    .year-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .year-heading {
+      /* type + hairline from utilities.css */
+      margin: 0 0 1.1rem;
+    }
+
+    .talks-secondary {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin-top: 0.85rem;
+      padding-top: 0.35rem;
+    }
+
+    @media (min-width: 900px) {
+      /* Lock lead + secondary to one folio grid so photos share left/right edges */
+      .year-section {
+        --folio-columns: repeat(2, minmax(0, 1fr));
+        --folio-gap: 2.25rem;
+      }
+
+      .year-section :global(.talk-lead--photo) {
+        grid-template-columns: var(--folio-columns);
+        column-gap: var(--folio-gap);
+      }
+
+      .talks-secondary {
+        display: grid;
+        grid-template-columns: var(--folio-columns);
+        column-gap: var(--folio-gap);
+        row-gap: 0.5rem;
+        /* Hairline between columns, NYT-style */
+        column-rule: 1px solid var(--color-border-subtle);
+        align-items: stretch;
+      }
+
+      .talks-secondary :global(.talk-card) {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        min-width: 0;
+        /* Keep padding equal across the row so CTAs share a baseline */
+        padding-bottom: 2rem;
+        margin-bottom: 0.35rem;
+      }
+
+      .talks-secondary :global(.talk-card.talk-card--compact) {
+        display: grid;
+        grid-template-rows: auto 1fr;
+      }
+
+      .talks-secondary :global(.talk-card .card-content) {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        height: 100%;
+        min-height: 0;
+      }
+
+      .talks-secondary :global(.talk-card .talk-tags) {
+        margin-top: auto;
+      }
+
+      .talks-secondary :global(.talk-card:nth-last-child(-n + 2)) {
+        border-bottom: none;
+      }
+    }
+
+    @media (max-width: 899px) {
+      .talks-secondary :global(.talk-card:last-child) {
+        border-bottom: none;
+        padding-bottom: 0;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .page-intro--wide {
+        max-width: 38rem;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .community-timeline {
+        gap: 2.5rem;
+      }
+
+      .year-heading {
+        margin-bottom: 1rem;
+      }
+    }
+  </style>
+</BaseLayout>

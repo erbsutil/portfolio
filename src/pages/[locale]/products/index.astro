@@ -1,0 +1,249 @@
+---
+/**
+ * Products shelf — Featured storefront (editorial grid)
+ *
+ * Route: /[locale]/products
+ */
+
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import SEO from "../../../components/SEO.astro";
+import StructuredData from "../../../components/StructuredData.astro";
+import AppCard from "../../../components/AppCard.astro";
+import { getCollection } from "astro:content";
+import { withLocale } from "../../../i18n/config";
+import { localeFromParams, localeStaticPaths } from "../../../i18n/utils";
+import { getUi } from "../../../i18n/ui";
+import { localizeAppData } from "../../../i18n/content/localize";
+
+export function getStaticPaths() {
+  return localeStaticPaths();
+}
+
+const locale = localeFromParams(Astro.params.locale);
+const ui = getUi(locale);
+
+const allApps = await getCollection("apps");
+
+const apps = [...allApps]
+  .map((app) => ({
+    ...app,
+    data: localizeAppData(
+      app.id,
+      app.data as Record<string, unknown>,
+      locale,
+    ) as typeof app.data,
+  }))
+  .sort((a, b) => {
+    const orderA = a.data.order ?? 999;
+    const orderB = b.data.order ?? 999;
+    if (orderA !== orderB) return orderA - orderB;
+    return b.data.year - a.data.year;
+  });
+
+const listItems = apps.map((app) => ({
+  name: app.data.title,
+  url: app.data.url || withLocale(locale, `/products/#${app.id}`),
+  description: app.data.tagline || app.data.description,
+}));
+
+const statusLabels = {
+  live: ui.cards.statusLive,
+  beta: ui.cards.statusBeta,
+  "coming-soon": ui.cards.statusComingSoon,
+  archived: ui.cards.statusArchived,
+};
+
+const trialPricing = /free trial|teste gratuito/i;
+const productCta = (pricing?: string) =>
+  trialPricing.test(pricing ?? "") ? ui.cards.tryFree : ui.cards.openApp;
+---
+
+<BaseLayout locale={locale}>
+  <SEO
+    slot="head"
+    locale={locale}
+    pathWithoutLocale="/products"
+    title={ui.pages.products.title}
+    description={ui.pages.products.description}
+    type="website"
+    imageAlt={`${ui.pages.products.title} · Erick Sutil`}
+  />
+
+  <StructuredData
+    locale={locale}
+    type="ItemList"
+    data={{
+      name: ui.pages.products.itemListName,
+      description: ui.pages.products.description,
+      items: listItems.map((item) => ({
+        ...item,
+        itemType: "SoftwareApplication",
+      })),
+    }}
+  />
+
+  {
+    apps.map((app) => (
+      <StructuredData
+        locale={locale}
+        type="SoftwareApplication"
+        data={{
+          title: app.data.title,
+          tagline: app.data.tagline,
+          description: app.data.description,
+          url: app.data.url,
+          category: app.data.category,
+          pricing: app.data.pricing,
+          image: app.data.icon,
+          operatingSystem: "Web",
+        }}
+      />
+    ))
+  }
+
+  <StructuredData
+    locale={locale}
+    type="BreadcrumbList"
+    data={{
+      items: [
+        { name: ui.pages.products.breadcrumbHome, url: withLocale(locale, "/") },
+        {
+          name: ui.pages.products.breadcrumbProducts,
+          url: withLocale(locale, "/products"),
+        },
+      ],
+    }}
+  />
+
+  <div class="products-page">
+    <header class="page-header">
+      <h1 class="page-title">{ui.pages.products.heading}</h1>
+      <p class="page-intro">{ui.pages.products.intro}</p>
+    </header>
+
+    <section class="featured-section" aria-label={ui.pages.products.heading}>
+      {
+        apps.length > 0 ? (
+          <div class="featured-grid">
+            {apps.map((app) => (
+              <AppCard
+                title={app.data.title}
+                tagline={app.data.tagline}
+                description={app.data.description}
+                icon={app.data.icon}
+                status={app.data.status}
+                pricing={app.data.pricing}
+                locale={app.data.locale}
+                accent={app.data.accent}
+                url={app.data.url}
+                ctaLabel={productCta(app.data.pricing)}
+                comingSoonLabel={ui.cards.comingSoon}
+                opensNewTabLabel={ui.opensNewTab}
+                statusLabels={statusLabels}
+                featured={app.data.featured}
+              />
+            ))}
+          </div>
+        ) : (
+          <p class="empty-state">{ui.pages.products.empty}</p>
+        )
+      }
+    </section>
+
+    <aside class="products-footnote">
+      <h2 class="products-footnote-title">{ui.pages.products.footnoteTitle}</h2>
+      <p>
+        {ui.pages.products.footnoteBeforeLink}{" "}
+        <a href={withLocale(locale, "/projects")}>{ui.pages.products.footnoteLink}</a>{ui.pages.products.footnoteAfterLink}
+      </p>
+    </aside>
+  </div>
+
+  <style>
+    .products-page {
+      max-width: var(--max-width-content);
+      margin: 0 auto;
+      padding: 2.25rem 1.5rem 4rem;
+    }
+
+    .featured-section {
+      margin-bottom: 3.25rem;
+    }
+
+    .featured-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1.25rem;
+      align-items: stretch;
+    }
+
+    .featured-grid > :global(*) {
+      height: 100%;
+      min-height: 100%;
+    }
+
+    .empty-state {
+      color: var(--color-text-muted);
+      font-size: 0.975rem;
+    }
+
+    .products-footnote {
+      margin-top: 0.5rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--color-border);
+    }
+
+    .products-footnote-title {
+      margin: 0 0 0.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--color-text);
+      letter-spacing: -0.01em;
+    }
+
+    .products-footnote p {
+      margin: 0;
+      font-size: 0.9375rem;
+      line-height: 1.65;
+      color: var(--color-text-muted);
+      max-width: 36rem;
+    }
+
+    .products-footnote a {
+      color: var(--color-text-secondary);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .products-footnote a:hover {
+      color: var(--color-text);
+    }
+
+    .products-footnote a:focus-visible {
+      outline: var(--focus-ring-width) solid var(--focus-ring-color);
+      outline-offset: var(--focus-ring-offset);
+      border-radius: 2px;
+    }
+
+    @media (max-width: 1100px) {
+      .featured-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .featured-grid > :global(:last-child:nth-child(odd)) {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .featured-grid {
+        grid-template-columns: 1fr;
+        gap: 1.75rem;
+      }
+
+      .products-page {
+        padding: 1.5rem 1rem 3rem;
+      }
+    }
+  </style>
+</BaseLayout>

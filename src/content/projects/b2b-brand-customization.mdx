@@ -1,0 +1,34 @@
+---
+title: "B2B Brand Customization"
+role: "Frontend Engineer"
+year: 2022
+outcomeSummary: "Built self-serve brand tools for company admins on public profile pages so identity updates did not need support tickets."
+overview: "On a consumer platform with performance-sensitive public profile pages, I worked on brand customization tools so company admins could manage identity without filing support tickets."
+problem: "Profile customization options were thin, so company admins had little control over how the public profile looked beyond basic fields. We needed self-serve tools simple enough for non-technical admins."
+constraints:
+  - "Public profile pages: performance mattered."
+  - "Existing monolithic frontend."
+  - "UX had to work for non-technical company admins."
+approach: "Refactored the profile editor with custom cover cropping, Unsplash, and video. Moved editor state from prop-drilling to Context API."
+keyDecisions:
+  - decision: "Context API for editor state"
+    reasoning: "Prop-drilling had become unmanageable. Context was enough for that editor at the time."
+  - decision: "Unsplash plus cropping"
+    reasoning: "Gave admins a usable image library and consistent cover framing."
+  - decision: "Styled Components from Figma"
+    reasoning: "Matched DevMode specs without inventing a parallel design language."
+techStack:
+  - "React"
+  - "TypeScript"
+  - "Context API"
+  - "Styled Components"
+  - "Unsplash API"
+  - "Figma"
+impact:
+  qualitative: "Admins could set cover crop, Unsplash images, and video on the public profile from the editor."
+learnings:
+  - "Editor state belongs close to the surface that owns cropping and media choices; Context beat prop-drilling here without a heavier store."
+featured: true
+status: "completed"
+order: 5
+---

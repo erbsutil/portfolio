@@ -1,0 +1,539 @@
+---
+/**
+ * Mobile infinite reader for case / talk detail pages.
+ * Desktop unchanged. Back to the index stays in a sticky bar.
+ */
+interface FeedItem {
+  slug: string;
+  title: string;
+  url: string;
+}
+
+interface Props {
+  items: FeedItem[];
+  currentSlug: string;
+  indexHref: string;
+  indexLabel: string;
+  continueLabel: string;
+  nextLabel: string;
+  positionTemplate: string;
+}
+
+const {
+  items,
+  currentSlug,
+  indexHref,
+  indexLabel,
+  continueLabel,
+  nextLabel,
+  positionTemplate,
+} = Astro.props;
+
+const total = items.length;
+const currentIndex = Math.max(
+  0,
+  items.findIndex((item) => item.slug === currentSlug),
+);
+const nextItem = total > 1 ? items[(currentIndex + 1) % total] : undefined;
+const position = positionTemplate
+  .replace("{n}", String(currentIndex + 1))
+  .replace("{total}", String(total));
+---
+
+<div
+  class:list={["reader-root", { "reader-root--active": total > 1 }]}
+  data-reader-root={total > 1 ? "true" : undefined}
+  data-reader-total={String(total)}
+  data-reader-next-label={nextLabel}
+>
+  {
+    total > 1 && (
+      <>
+        <div class="reader-bar" role="navigation" aria-label={indexLabel}>
+          <div class="reader-bar__shell">
+            <div class="reader-bar__row">
+              <a class="reader-bar__back" href={indexHref}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M8.29289 5.29289C8.68342 4.90237 9.31658 4.90237 9.70711 5.29289C10.0976 5.68342 10.0976 6.31658 9.70711 6.70711L5.41421 11H21C21.5523 11 22 11.4477 22 12C22 12.5523 21.5523 13 21 13H5.41421L9.70711 17.2929C10.0976 17.6834 10.0976 18.3166 9.70711 18.7071C9.31658 19.0976 8.68342 19.0976 8.29289 18.7071L2.29289 12.7071C1.90237 12.3166 1.90237 11.6834 2.29289 11.2929L8.29289 5.29289Z"></path>
+                </svg>
+                {indexLabel}
+              </a>
+              <p class="reader-bar__count" aria-live="polite">
+                <span data-reader-position data-reader-template={positionTemplate}>
+                  {position}
+                </span>
+              </p>
+            </div>
+            <p class="reader-bar__now" data-reader-now>
+              {items[currentIndex]?.title}
+            </p>
+          </div>
+        </div>
+        <template data-reader-queue>{JSON.stringify(items)}</template>
+      </>
+    )
+  }
+
+  <slot />
+
+  {
+    total > 1 && (
+      <>
+        <div data-reader-mount></div>
+        <div class="reader-continue" data-reader-continue>
+          <p class="reader-continue__kicker">{continueLabel}</p>
+          {
+            nextItem && (
+              <p class="reader-continue__title">
+                <span class="visually-hidden">{nextLabel}: </span>
+                {nextItem.title}
+              </p>
+            )
+          }
+        </div>
+      </>
+    )
+  }
+</div>
+
+<style>
+  .reader-bar,
+  .reader-continue {
+    display: none;
+  }
+
+  @media (max-width: 768px) {
+    .reader-root--active {
+      --reader-inline: max(var(--pad-case-inline), env(safe-area-inset-left, 0px));
+      --reader-inline-end: max(var(--pad-case-inline), env(safe-area-inset-right, 0px));
+      /* Cancel .page-body padding so the bar sits flush under the site header. */
+      margin-top: calc(-1 * var(--space-md));
+    }
+
+    .reader-root--active :global(.case-jump),
+    .reader-root--active :global([data-reader-exclude]),
+    .reader-root--active :global(.talk-back),
+    .reader-root--active :global(.case-back),
+    .reader-root--active :global(.case-back--footer) {
+      display: none !important;
+    }
+
+    /* Same outer shell as .case-study / .talk-detail */
+    .reader-root--active :global(.case-study),
+    .reader-root--active :global(.talk-detail) {
+      max-width: var(--max-width-case);
+      margin-inline: auto;
+      padding-left: var(--reader-inline);
+      padding-right: var(--reader-inline-end);
+      box-sizing: border-box;
+    }
+
+    .reader-root--active :global(.case-study) {
+      padding-top: 1.25rem;
+    }
+
+    .reader-root--active :global(.talk-detail) {
+      padding-top: 1.1rem;
+    }
+
+    .reader-bar {
+      display: block;
+      position: sticky;
+      top: var(--site-header-height);
+      z-index: 96;
+      margin: 0;
+      padding: 0;
+      background-color: var(--color-bg);
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .reader-bar__shell {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      max-width: var(--max-width-case);
+      width: 100%;
+      margin-inline: auto;
+      padding: 0.5rem var(--reader-inline-end) 0.55rem var(--reader-inline);
+      box-sizing: border-box;
+    }
+
+    .reader-bar__row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      min-width: 0;
+    }
+
+    .reader-bar__back {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      min-width: 0;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--color-accent);
+      text-decoration: none;
+      min-height: 2rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .reader-bar__back:hover,
+    .reader-bar__back:focus-visible {
+      color: var(--color-accent-hover);
+      text-decoration: underline;
+      text-underline-offset: 0.18em;
+    }
+
+    .reader-bar__back:focus-visible {
+      outline: var(--focus-ring-width) solid var(--focus-ring-color);
+      outline-offset: var(--focus-ring-offset);
+    }
+
+    .reader-bar__count {
+      margin: 0;
+      flex-shrink: 0;
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      letter-spacing: 0.04em;
+      color: var(--color-text-muted);
+      white-space: nowrap;
+      line-height: 1.2;
+    }
+
+    .reader-bar__now {
+      margin: 0;
+      min-width: 0;
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      letter-spacing: 0.02em;
+      color: var(--color-text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      line-height: 1.35;
+    }
+
+    .reader-continue {
+      display: block;
+      width: 100%;
+      max-width: var(--max-width-case);
+      margin: 2rem auto 2.5rem;
+      padding: 1.35rem var(--reader-inline-end) 0.5rem var(--reader-inline);
+      border-top: 1px solid var(--color-border);
+      text-align: left;
+      box-sizing: border-box;
+    }
+
+    .reader-continue.is-done {
+      display: none;
+    }
+
+    .reader-continue__kicker {
+      margin: 0 0 0.35rem;
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+    }
+
+    .reader-continue__title {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.3;
+      color: var(--color-text);
+      text-wrap: balance;
+    }
+
+    :global(.reader-break) {
+      width: 100%;
+      max-width: var(--max-width-case);
+      margin: 2.75rem auto 0.25rem;
+      padding: 1.15rem var(--reader-inline-end) 0 var(--reader-inline);
+      box-sizing: border-box;
+      border-top: 1px solid var(--color-border);
+    }
+
+    :global(.reader-break__kicker) {
+      margin: 0;
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+    }
+
+    :global([data-reader-article] + [data-reader-article]) {
+      padding-top: 0.5rem;
+    }
+  }
+</style>
+
+<script>
+  type FeedItem = { slug: string; title: string; url: string };
+
+  const MQ = "(max-width: 768px)";
+
+  function parseQueue(root: Element): FeedItem[] {
+    const node = root.querySelector("[data-reader-queue]");
+    const raw =
+      node instanceof HTMLTemplateElement
+        ? node.innerHTML
+        : node?.textContent;
+    if (!raw) return [];
+    try {
+      const data = JSON.parse(raw) as FeedItem[];
+      return Array.isArray(data) ? data : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function prefixIds(root: Element, slug: string) {
+    root.querySelectorAll<HTMLElement>("[id]").forEach((el) => {
+      el.id = `${slug}-${el.id}`;
+    });
+    root.querySelectorAll<HTMLAnchorElement>('a[href^="#"]').forEach((a) => {
+      const href = a.getAttribute("href");
+      if (href && href.length > 1) a.setAttribute("href", `#${slug}-${href.slice(1)}`);
+    });
+  }
+
+  function stripClone(article: Element) {
+    article.querySelectorAll("[data-reader-exclude]").forEach((el) => el.remove());
+    article.querySelector(".case-jump")?.remove();
+  }
+
+  function pathOf(url: string) {
+    try {
+      return new URL(url, window.location.origin).pathname.replace(/\/$/, "") || "/";
+    } catch {
+      return url.replace(/\/$/, "");
+    }
+  }
+
+  function initReader(root: HTMLElement) {
+    if (root.dataset.readerReady === "1") return;
+    if (!window.matchMedia(MQ).matches) return;
+    root.dataset.readerReady = "1";
+
+    /* Belt-and-suspenders: remove in-article back links on mobile reader. */
+    root.querySelectorAll("[data-reader-exclude], .case-back, .talk-back").forEach((el) => {
+      el.remove();
+    });
+
+    const items = parseQueue(root);
+    if (items.length < 2) return;
+
+    const first = root.querySelector<HTMLElement>("[data-reader-article]");
+    if (!first) return;
+
+    const mount = root.querySelector<HTMLElement>("[data-reader-mount]");
+    const continueEl = root.querySelector<HTMLElement>("[data-reader-continue]");
+    const continueTitle = root.querySelector<HTMLElement>(
+      "[data-reader-continue] .reader-continue__title",
+    );
+    const positionEl = root.querySelector<HTMLElement>("[data-reader-position]");
+    const nowEl = root.querySelector<HTMLElement>("[data-reader-now]");
+    const nextLabel = root.dataset.readerNextLabel || "Next";
+    const template = positionEl?.dataset.readerTemplate || "{n} of {total}";
+    const bar = root.querySelector<HTMLElement>(".reader-bar");
+
+    const startSlug = first.dataset.readerSlug || "";
+    const startIndex = Math.max(
+      0,
+      items.findIndex((item) => item.slug === startSlug),
+    );
+    const queue = [
+      ...items.slice(startIndex + 1),
+      ...items.slice(0, startIndex),
+    ];
+    let cursor = 0;
+    let loading = false;
+    let activeSlug = "";
+    let raf = 0;
+    const tracked: HTMLElement[] = [first];
+    const loaded = new Set<string>([startSlug]);
+
+    const setStatus = (item: FeedItem) => {
+      if (item.slug === activeSlug) return;
+      activeSlug = item.slug;
+      const index = items.findIndex((entry) => entry.slug === item.slug);
+      if (positionEl && index >= 0) {
+        positionEl.textContent = template
+          .replace("{n}", String(index + 1))
+          .replace("{total}", String(items.length));
+      }
+      if (nowEl) nowEl.textContent = item.title;
+      const nextPath = pathOf(item.url);
+      const currentPath = window.location.pathname.replace(/\/$/, "") || "/";
+      if (item.url && nextPath !== currentPath) {
+        window.history.replaceState({ reader: true }, "", item.url);
+      }
+    };
+
+    const updateContinue = () => {
+      const upcoming = queue[cursor];
+      if (!upcoming || !continueEl) {
+        continueEl?.classList.add("is-done");
+        return;
+      }
+      continueEl.classList.remove("is-done");
+      if (continueTitle) {
+        continueTitle.replaceChildren();
+        const sr = document.createElement("span");
+        sr.className = "visually-hidden";
+        sr.textContent = `${nextLabel}: `;
+        continueTitle.append(sr, document.createTextNode(upcoming.title));
+      }
+    };
+
+    const readingLine = () => {
+      const headerBottom =
+        document.querySelector(".site-header")?.getBoundingClientRect().bottom ?? 56;
+      const barHeight = bar?.offsetHeight ?? 44;
+      return headerBottom + barHeight + 8;
+    };
+
+    /**
+     * Classic scrollspy: among articles that have started above the reading
+     * line, pick the last one (greatest top). Avoids a long previous article
+     * "owning" the line forever because its box still intersects.
+     */
+    const syncActive = () => {
+      const line = readingLine();
+      let current: HTMLElement | null = null;
+      let bestTop = -Infinity;
+
+      for (const article of tracked) {
+        const rect = article.getBoundingClientRect();
+        if (rect.height <= 0) continue;
+        if (rect.top <= line && rect.bottom > line - 32) {
+          if (rect.top >= bestTop) {
+            bestTop = rect.top;
+            current = article;
+          }
+        }
+      }
+
+      if (!current) {
+        let bestDist = Infinity;
+        for (const article of tracked) {
+          const rect = article.getBoundingClientRect();
+          if (rect.height <= 0) continue;
+          const dist = Math.abs(rect.top - line);
+          if (dist < bestDist) {
+            bestDist = dist;
+            current = article;
+          }
+        }
+      }
+
+      if (!current) return;
+      const slug = current.dataset.readerSlug;
+      const item = items.find((entry) => entry.slug === slug);
+      if (item) setStatus(item);
+    };
+
+    const loadNext = async () => {
+      if (loading || cursor >= queue.length || !mount) return;
+      const item = queue[cursor];
+      if (!item || loaded.has(item.slug)) {
+        cursor += 1;
+        updateContinue();
+        return;
+      }
+      loading = true;
+      try {
+        const res = await fetch(item.url, { headers: { Accept: "text/html" } });
+        if (!res.ok) {
+          cursor += 1;
+          updateContinue();
+          return;
+        }
+        const html = await res.text();
+        const doc = new DOMParser().parseFromString(html, "text/html");
+        const source = doc.querySelector<HTMLElement>("[data-reader-article]");
+        if (!source) {
+          cursor += 1;
+          updateContinue();
+          return;
+        }
+
+        const breakEl = document.createElement("header");
+        breakEl.className = "reader-break";
+        breakEl.dataset.readerBreakFor = item.slug;
+        const kicker = document.createElement("p");
+        kicker.className = "reader-break__kicker";
+        kicker.textContent = nextLabel;
+        breakEl.append(kicker);
+
+        const clone = source.cloneNode(true) as HTMLElement;
+        stripClone(clone);
+        prefixIds(clone, item.slug);
+        clone.querySelectorAll("img").forEach((img) => {
+          img.loading = "lazy";
+          img.removeAttribute("fetchpriority");
+        });
+
+        mount.append(breakEl, clone);
+        loaded.add(item.slug);
+        cursor += 1;
+        tracked.push(clone);
+        updateContinue();
+        syncActive();
+      } catch {
+        /* keep going; user can still use the index */
+      } finally {
+        loading = false;
+      }
+    };
+
+    const nearEnd = () => {
+      const marker = continueEl || mount;
+      if (!marker) return false;
+      return marker.getBoundingClientRect().top < window.innerHeight * 1.4;
+    };
+
+    const onScroll = () => {
+      if (raf) return;
+      raf = window.requestAnimationFrame(() => {
+        raf = 0;
+        syncActive();
+        if (nearEnd()) void loadNext();
+      });
+    };
+
+    const startItem = items[startIndex] ?? items.find((item) => item.slug === startSlug);
+    if (startItem) setStatus(startItem);
+    updateContinue();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
+    syncActive();
+    if (nearEnd()) void loadNext();
+  }
+
+  function boot() {
+    document.querySelectorAll<HTMLElement>("[data-reader-root]").forEach(initReader);
+  }
+
+  boot();
+  document.addEventListener("astro:after-swap", () => {
+    document.querySelectorAll<HTMLElement>("[data-reader-root]").forEach((root) => {
+      delete root.dataset.readerReady;
+    });
+    boot();
+  });
+  window.matchMedia(MQ).addEventListener("change", (event) => {
+    if (event.matches) boot();
+  });
+</script>

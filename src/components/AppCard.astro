@@ -1,0 +1,327 @@
+---
+/**
+ * AppCard — Featured product tile (storefront)
+ *
+ * Editorial card: icon + external cue, meta, serif title, copy, CTA.
+ * compact=true for homepage teaser (tagline, tighter padding).
+ *
+ * @component
+ */
+
+interface Props {
+  title: string;
+  tagline: string;
+  description: string;
+  icon: string;
+  status: "live" | "beta" | "coming-soon" | "archived";
+  pricing?: string;
+  locale?: string | string[];
+  accent?: string;
+  url?: string;
+  ctaLabel?: string;
+  comingSoonLabel?: string;
+  opensNewTabLabel?: string;
+  statusLabels?: Record<"live" | "beta" | "coming-soon" | "archived", string>;
+  featured?: boolean;
+  /** Heading level for the product title. Default h3. */
+  titleAs?: "h2" | "h3";
+  /** Homepage teaser: smaller card, tagline instead of full description. */
+  compact?: boolean;
+}
+
+const {
+  title,
+  tagline,
+  description,
+  icon,
+  status,
+  pricing,
+  url,
+  ctaLabel = "Try it now",
+  comingSoonLabel = "Coming to the shelf soon",
+  opensNewTabLabel = "(opens in a new tab)",
+  statusLabels = {
+    live: "Live",
+    beta: "Beta",
+    "coming-soon": "Coming soon",
+    archived: "Archived",
+  },
+  titleAs: TitleTag = "h3",
+  compact = false,
+} = Astro.props;
+
+const isLaunchable = Boolean(url) && (status === "live" || status === "beta");
+const Tag = isLaunchable ? "a" : "article";
+
+const statusMeta: Record<typeof status, string> = {
+  live: statusLabels.live,
+  beta: statusLabels.beta,
+  "coming-soon": statusLabels["coming-soon"],
+  archived: statusLabels.archived,
+};
+
+const metaParts = compact
+  ? [statusMeta[status], pricing?.split("·")[0]?.trim()].filter(Boolean)
+  : [statusMeta[status], pricing].filter(Boolean);
+const meta = metaParts.join(" · ");
+const body = compact ? tagline : description;
+---
+
+<Tag
+  {...(isLaunchable
+    ? {
+        href: url,
+        target: "_blank",
+        rel: "noopener noreferrer",
+      }
+    : {})}
+  class:list={[
+    "feature-card",
+    {
+      "feature-card--link": isLaunchable,
+      "feature-card--compact": compact,
+    },
+  ]}
+>
+  <div class="feature-top">
+    <div class="feature-icon-wrap" aria-hidden="true">
+      <img
+        src={icon}
+        alt=""
+        width={compact ? 40 : 56}
+        height={compact ? 40 : 56}
+        class="feature-icon"
+        loading="lazy"
+      />
+    </div>
+    {
+      isLaunchable && (
+        <span class="feature-external" aria-hidden="true" title="Opens externally">
+          <svg
+            width={compact ? 16 : 18}
+            height={compact ? 16 : 18}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M14 4h6v6" />
+            <path d="M10 14L20 4" />
+            <path d="M20 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h5" />
+          </svg>
+        </span>
+      )
+    }
+  </div>
+
+  {meta && <p class="feature-meta">{meta}</p>}
+
+  <TitleTag class="feature-title">{title}</TitleTag>
+  <p class="feature-desc">{body}</p>
+
+  <p class="feature-cta">
+    {isLaunchable ? ctaLabel : comingSoonLabel}
+    {isLaunchable && (
+      <span class="visually-hidden"> {opensNewTabLabel}</span>
+    )}
+  </p>
+</Tag>
+
+<style>
+  .feature-card {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    height: 100%;
+    min-height: 100%;
+    box-sizing: border-box;
+    padding: 1.35rem 1.35rem 1.5rem;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    text-decoration: none;
+    color: inherit;
+    transition:
+      border-color 0.2s ease,
+      background 0.2s ease,
+      transform 0.15s ease;
+  }
+
+  .feature-card--compact {
+    padding: 1rem 1.05rem 1.1rem;
+  }
+
+  .feature-card--link {
+    cursor: pointer;
+  }
+
+  .feature-card--link:hover,
+  .feature-card--link:focus-visible {
+    border-color: var(--color-text-muted);
+    background: color-mix(in srgb, var(--color-bg-secondary) 55%, var(--color-bg));
+  }
+
+  .feature-card--link:active {
+    transform: translateY(1px);
+  }
+
+  .feature-card--link:focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
+  }
+
+  .feature-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 1.15rem;
+  }
+
+  .feature-card--compact .feature-top {
+    margin-bottom: 0.75rem;
+  }
+
+  .feature-icon-wrap {
+    width: 3.5rem;
+    height: 3.5rem;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+
+  .feature-card--compact .feature-icon-wrap {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .feature-icon {
+    display: block;
+    width: 3.5rem;
+    height: 3.5rem;
+    object-fit: contain;
+  }
+
+  .feature-card--compact .feature-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  :global([data-theme="dark"]) .feature-icon {
+    filter: brightness(1.35);
+  }
+
+  .feature-external {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    flex-shrink: 0;
+    color: var(--color-text-muted);
+    border: 1px solid var(--color-border);
+    background: var(--color-bg);
+    transition:
+      color 0.2s ease,
+      border-color 0.2s ease;
+  }
+
+  .feature-card--compact .feature-external {
+    width: 1.85rem;
+    height: 1.85rem;
+  }
+
+  .feature-card--link:hover .feature-external,
+  .feature-card--link:focus-visible .feature-external {
+    color: var(--color-accent);
+    border-color: color-mix(in srgb, var(--color-accent) 45%, var(--color-border));
+  }
+
+  .feature-meta {
+    margin: 0 0 0.55rem;
+    font-family: var(--font-sans);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    line-height: 1.3;
+  }
+
+  .feature-card--compact .feature-meta {
+    margin-bottom: 0.4rem;
+    font-size: 0.625rem;
+  }
+
+  .feature-title {
+    margin: 0 0 0.65rem;
+    font-family: var(--font-display);
+    font-size: clamp(1.25rem, 2.2vw, 1.5rem);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+    color: var(--color-text);
+  }
+
+  .feature-card--compact .feature-title {
+    margin-bottom: 0.4rem;
+    font-size: 1.125rem;
+  }
+
+  .feature-card--link:hover .feature-title,
+  .feature-card--link:focus-visible .feature-title {
+    text-decoration: underline;
+    text-underline-offset: 0.16em;
+    text-decoration-thickness: 1.5px;
+    text-decoration-color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  }
+
+  .feature-desc {
+    margin: 0;
+    flex: 1 1 auto;
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    color: var(--color-text-secondary);
+  }
+
+  .feature-card--compact .feature-desc {
+    margin-bottom: 0;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .feature-cta {
+    margin: 0;
+    margin-top: auto;
+    padding-top: 1.25rem;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+    text-decoration-thickness: 1px;
+  }
+
+  .feature-card--compact .feature-cta {
+    padding-top: 0.85rem;
+    font-size: 0.8125rem;
+  }
+
+  .feature-card--link:hover .feature-cta,
+  .feature-card--link:focus-visible .feature-cta {
+    color: var(--color-accent-hover);
+    text-decoration-thickness: 1.5px;
+  }
+
+  .feature-card:not(.feature-card--link) .feature-cta {
+    color: var(--color-text-muted);
+    text-decoration: none;
+  }
+</style>

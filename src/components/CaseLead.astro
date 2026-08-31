@@ -1,0 +1,248 @@
+---
+/**
+ * CaseLead — editorial front-page block for a case.
+ * Real covers only; no fake folio initials when a screenshot is missing.
+ * Rhythm: kicker (badge+year / year) → title → dek → CTA.
+ */
+import { Image } from "astro:assets";
+import type { ImageMetadata } from "astro";
+import ForwardLink from "./ForwardLink.astro";
+
+interface Props {
+  title: string;
+  href: string;
+  summary: string;
+  year: number;
+  cover?: ImageMetadata;
+  viewLabel: string;
+  featuredLabel?: string;
+  featured?: boolean;
+  /** Larger home/front treatment vs list lead */
+  size?: "home" | "list";
+  coverAlt?: string;
+}
+
+const {
+  title,
+  href,
+  summary,
+  year,
+  cover,
+  viewLabel,
+  featuredLabel = "Featured",
+  featured = false,
+  size = "list",
+  coverAlt,
+} = Astro.props;
+
+void coverAlt;
+---
+
+<article class:list={["case-lead", `case-lead--${size}`, { "case-lead--photo": !!cover }]}>
+  {
+    cover && (
+      <div class="case-lead__media" aria-hidden="true">
+        <Image
+          src={cover}
+          alt=""
+          widths={size === "home" ? [320, 480, 720, 960] : [480, 720, 960, 1280]}
+          sizes={
+            size === "home"
+              ? "(max-width: 768px) 92vw, min(22rem, 100%)"
+              : "(max-width: 899px) 92vw, min(36rem, 48vw)"
+          }
+          loading={size === "home" ? "eager" : "lazy"}
+          decoding="async"
+          class="case-lead__img"
+        />
+      </div>
+    )
+  }
+
+  <div class="case-lead__body">
+    <p class="case-lead__kicker">
+      {featured && <span class="case-lead__badge">{featuredLabel}</span>}
+      <span class="case-lead__year">{year}</span>
+    </p>
+    <h3 class="case-lead__title">
+      <a href={href}>{title}</a>
+    </h3>
+    <p class="case-lead__summary">{summary}</p>
+    <ForwardLink href={href} text={viewLabel} class="case-lead__cta" />
+  </div>
+</article>
+
+<style>
+  .case-lead {
+    display: grid;
+    gap: 0.95rem;
+    align-items: start;
+  }
+
+  .case-lead__media {
+    display: block;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-secondary);
+    overflow: hidden;
+    line-height: 0;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .case-lead__img {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+    object-position: top center;
+    display: block;
+    aspect-ratio: 16 / 10;
+  }
+
+  .case-lead--home .case-lead__img {
+    aspect-ratio: 16 / 10;
+    max-height: 11rem;
+  }
+
+  .case-lead--list .case-lead__img {
+    max-height: 16rem;
+  }
+
+  .case-lead__body {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .case-lead__kicker {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.55rem 0.75rem;
+    margin: 0 0 var(--teaser-kicker-gap);
+  }
+
+  .case-lead__kicker:has(.case-lead__badge) {
+    min-height: var(--teaser-kicker-min-h);
+  }
+
+  .case-lead--home .case-lead__kicker {
+    margin-bottom: 0.15rem;
+  }
+
+  .case-lead__badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.625rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.25rem 0.625rem;
+    border: 1px solid color-mix(in srgb, var(--color-accent) 40%, var(--color-border));
+    background: var(--color-accent-muted);
+    color: var(--color-accent);
+    /* Keep badge optically centered vs mono year on the shared baseline */
+    margin-top: 0.05rem;
+  }
+
+  .case-lead__year {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.06em;
+    line-height: 1.45;
+    color: var(--color-text-muted);
+  }
+
+  .case-lead__title {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.25;
+    margin: 0 0 var(--teaser-title-gap);
+    max-width: none;
+    text-wrap: balance;
+  }
+
+  .case-lead--home .case-lead__title {
+    font-size: clamp(1.2rem, 2.2vw, 1.45rem);
+    max-width: 28rem;
+  }
+
+  .case-lead--list .case-lead__title {
+    font-size: clamp(1.35rem, 2.1vw, 1.7rem);
+  }
+
+  .case-lead__title a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .case-lead__title a:hover,
+  .case-lead__title a:focus-visible {
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+    text-decoration-thickness: 1.5px;
+    text-decoration-color: color-mix(in srgb, var(--color-text) 70%, transparent);
+  }
+
+  .case-lead__title a:focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
+  }
+
+  .case-lead__summary {
+    margin: 0 0 var(--teaser-dek-gap);
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    color: var(--color-text-secondary);
+    max-width: none;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .case-lead--home .case-lead__summary {
+    max-width: 34rem;
+  }
+
+  .case-lead--list .case-lead__summary {
+    font-size: 1rem;
+    -webkit-line-clamp: 4;
+  }
+
+  .case-lead__cta {
+    margin: 0;
+  }
+
+  /* Desktop list: photo + copy side by side, image stretches with the text */
+  @media (min-width: 900px) {
+    .case-lead--list.case-lead--photo {
+      grid-template-columns: minmax(20rem, 1.05fr) minmax(0, 1fr);
+      column-gap: var(--teaser-lead-media-gap);
+      align-items: stretch;
+    }
+
+    .case-lead--list.case-lead--photo .case-lead__media {
+      height: 100%;
+      min-height: 16rem;
+    }
+
+    .case-lead--list.case-lead--photo .case-lead__img {
+      height: 100%;
+      max-height: none;
+      aspect-ratio: auto;
+      min-height: 16rem;
+    }
+
+    .case-lead--list .case-lead__body {
+      justify-content: center;
+    }
+  }
+
+  @media (max-width: 719px) {
+    .case-lead__summary {
+      -webkit-line-clamp: 4;
+    }
+  }
+</style>

@@ -1,0 +1,101 @@
+{
+  "version": 1,
+  "skills": {
+    "crisp-a11y": {
+      "source": "laith-wallace/crisp",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/crisp-a11y/SKILL.md",
+      "computedHash": "a8b04c528f3a6613f24bd889d59141545cb8a6f6a7da6c925af588dcff8c6265"
+    },
+    "crisp-ai": {
+      "source": "laith-wallace/crisp",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/crisp-ai/SKILL.md",
+      "computedHash": "379409e8f8e58a1ef88caeeb40c82badb9b74fad7487685dd6bf8d4360aa2bc5"
+    },
+    "crisp-audit": {
+      "source": "laith-wallace/crisp",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/crisp-audit/SKILL.md",
+      "computedHash": "9219f0b939fa77fd9120587fdc720fc8bdccc5d94e277e5bc7d0051a60944ad8"
+    },
+    "crisp-brief": {
+      "source": "laith-wallace/crisp",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/crisp-brief/SKILL.md",
+      "computedHash": "cbb0634b799db11d255e21f66a6c8615652f0162ed87c2946aceb8cae948e7be"
+    },
+    "crisp-design-eng": {
+      "source": "laith-wallace/crisp",
+      "sourceType": "github",
+      "skillPath": "skills/crisp-design-eng/SKILL.md",
+      "computedHash": "cec8c5ccca97cc9e5eff13bcf442a02f559d131266a3e5c41cb5533a75f48513"
+    },
+    "crisp-funnel": {
+      "source": "laith-wallace/crisp",
+      "sourceType": "github",
+      "skillPath": "skills/crisp-funnel/SKILL.md",
+      "computedHash": "0f0ca6975a762f3fd2e938c4abdc5ecbcecfe4682b54d3b3a79075039290abe2"
+    },
+    "crisp-improve-ui": {
+      "source": "laith-wallace/crisp",
+      "sourceType": "github",
+      "skillPath": "skills/crisp-improve-ui/SKILL.md",
+      "computedHash": "3636af0b25c2c8be50b0e5e9d2a8cd58bb48e57bacda57df5735fb2adbff5479"
+    },
+    "crisp-production-ready": {
+      "source": "laith-wallace/crisp",
+      "sourceType": "github",
+      "skillPath": "skills/crisp-production-ready/SKILL.md",
+      "computedHash": "2a8120952c3efeb59bdae3ed49e707c0e0dad52cab74abb51aa0484a169148cf"
+    },
+    "crisp-redesign": {
+      "source": "laith-wallace/crisp",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/crisp-redesign/SKILL.md",
+      "computedHash": "ba072e0753860081895772dae57d382b2767be45a00b90c271bb33e61d95e147"
+    },
+    "crisp-research": {
+      "source": "laith-wallace/crisp",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/crisp-research/SKILL.md",
+      "computedHash": "29ebcb0b1b1d117cbe5de9cd704378bff058ed97b3b0ceeb9703be25bba59eb0"
+    },
+    "crisp-review": {
+      "source": "laith-wallace/crisp",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/crisp-review/SKILL.md",
+      "computedHash": "33f57e6a78d280e3214d4771b7648cf5254344c8c88229b4b3ac7eda8670eecc"
+    },
+    "crisp-teach": {
+      "source": "laith-wallace/crisp",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/crisp-teach/SKILL.md",
+      "computedHash": "1073bb3e7a680fb4a505b2cf9a594a598d20bd5520bfd6ef5f44113b6afc4a99"
+    },
+    "crisp-ux-laws": {
+      "source": "laith-wallace/crisp",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/crisp-ux-laws/SKILL.md",
+      "computedHash": "3a978b8697569780a2d6a62efb0ee0a91ede8c113659db2aa9c4e9f6a8258947"
+    },
+    "feature-design": {
+      "source": "laith-wallace/crisp",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/feature-design/SKILL.md",
+      "computedHash": "23308e92da63062abd06569c69140a2e0c9857e31ce8a7b90c35b1a0d7e33e2b"
+    },
+    "handoff": {
+      "source": "laith-wallace/crisp",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/handoff/SKILL.md",
+      "computedHash": "f16ee1c69c2323bfee8d5a0aed7c7a25609d2e0cd362c10241f314c20a93887e"
+    },
+    "web-design-guidelines": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/web-design-guidelines/SKILL.md",
+      "computedHash": "f3bc47f890f42a44db1007ab390709ec368e4b8c089baee6b0007182236ac474"
+    }
+  }
+}

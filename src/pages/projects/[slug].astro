@@ -1,0 +1,15 @@
+---
+/**
+ * Legacy URL → /en/projects/[slug] (301)
+ */
+import { getCollection } from "astro:content";
+
+export async function getStaticPaths() {
+  const projects = await getCollection("projects");
+  return projects.map((project) => ({
+    params: { slug: project.id },
+  }));
+}
+
+return Astro.redirect(`/en/projects/${Astro.params.slug}/`, 301);
+---

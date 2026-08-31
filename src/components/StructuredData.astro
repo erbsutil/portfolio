@@ -1,0 +1,431 @@
+---
+/**
+ * JSON-LD for Google rich results + entity understanding (schema.org).
+ *
+ * Google-supported on this site:
+ * - Article (cases / talk write-ups)
+ * - BreadcrumbList
+ * - Event (community talks)
+ * - ProfilePage (home / contact)
+ * - SoftwareApplication (products; needs Offer; ratings only if real — we never invent them)
+ *
+ * Also emits WebSite, Person, ItemList, CreativeWork for crawlers / AI even when
+ * they do not unlock a specific Google rich-result chrome.
+ */
+import { siteConfig } from "../config";
+import { profile } from "../data/profile";
+import { defaultLocale, htmlLang, type AppLocale } from "../i18n/config";
+import { identitySameAs } from "../lib/identityLinks";
+
+interface Props {
+  type:
+    | "WebSite"
+    | "Project"
+    | "Article"
+    | "Person"
+    | "ProfilePage"
+    | "BreadcrumbList"
+    | "Event"
+    | "ItemList"
+    | "SoftwareApplication";
+  data?: Record<string, any>;
+  locale?: AppLocale;
+}
+
+const { type, data = {}, locale = defaultLocale } = Astro.props;
+const pageLang = htmlLang[locale];
+
+const siteURL = siteConfig.url.endsWith("/")
+  ? siteConfig.url.slice(0, -1)
+  : siteConfig.url;
+
+const personId = `${siteURL}/#person`;
+const websiteId = `${siteURL}/#website`;
+
+const socialLinks = identitySameAs();
+
+function absoluteUrl(url?: string) {
+  if (!url) return undefined;
+  if (url.startsWith("http")) return url;
+  return `${siteURL}${url.startsWith("/") ? url : `/${url}`}`;
+}
+
+function personNode(overrides: Record<string, unknown> = {}) {
+  return {
+    "@type": "Person",
+    "@id": personId,
+    name: overrides.name || profile.name,
+    alternateName: profile.fullName,
+    jobTitle: overrides.jobTitle || profile.label,
+    description: overrides.description || profile.summary,
+    url: overrides.url || siteURL,
+    email: overrides.email || profile.email,
+    sameAs: overrides.sameAs || socialLinks,
+    image: overrides.image,
+    knowsAbout: overrides.knowsAbout || [...profile.knowsAbout],
+    worksFor: {
+      "@type": "Organization",
+      name: profile.worksFor.name,
+      url: profile.worksFor.url,
+    },
+    alumniOf: profile.education.map((ed) => ({
+      "@type": "EducationalOrganization",
+      name: ed.institution,
+    })),
+    homeLocation: {
+      "@type": "Place",
+      name:
+        siteConfig.author.location ||
+        `${profile.location.city}, ${profile.location.region}`,
+      address: {
+        "@type": "PostalAddress",
+        addressRegion: profile.location.city,
+        addressCountry: profile.location.countryCode,
+      },
+    },
+  };
+}
+
+/** Map free-form product categories to Google SoftwareApplication categories. */
+function appCategory(category?: string) {
+  const key = (category || "").toLowerCase();
+  if (key.includes("health") || key.includes("consumer") || key.includes("fit")) {
+    return "HealthApplication";
+  }
+  if (key.includes("b2b") || key.includes("business") || key.includes("real")) {
+    return "BusinessApplication";
+  }
+  if (key.includes("infra") || key.includes("developer") || key.includes("dev")) {
+    return "DeveloperApplication";
+  }
+  return "BusinessApplication";
+}
+
+function eventAttendance() {
+  // All current community entries are in-person.
+  return "https://schema.org/OfflineEventAttendanceMode";
+}
+
+/** Frontmatter dates are calendar days, not datetimes. Keep YYYY-MM-DD for Google. */
+function calendarDate(value: Date | string | undefined) {
+  if (!value) return undefined;
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value.toISOString().slice(0, 10);
+  }
+  const match = String(value).match(/^(\d{4}-\d{2}-\d{2})/);
+  return match?.[1];
+}
+
+function parsePlace(location?: string) {
+  if (!location) {
+    return {
+      "@type": "Place",
+      name: "Brazil",
+      address: {
+        "@type": "PostalAddress",
+        addressCountry: "BR",
+      },
+    };
+  }
+  const parts = location.split(",").map((p) => p.trim()).filter(Boolean);
+  const countryHint = /brazil|brasil/i.test(location) ? "BR" : undefined;
+  return {
+    "@type": "Place",
+    name: location,
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: parts[0],
+      addressRegion: parts[1] || profile.location.city,
+      addressCountry: countryHint || profile.location.countryCode,
+    },
+  };
+}
+
+function generateStructuredData(type: string, data: Record<string, any>) {
+  const baseContext = "https://schema.org";
+
+  switch (type) {
+    case "WebSite":
+      return {
+        "@context": baseContext,
+        "@type": "WebSite",
+        "@id": websiteId,
+        name: data.name || siteConfig.title,
+        description: data.description || siteConfig.description,
+        url: data.url || siteURL,
+        inLanguage: data.inLanguage || pageLang,
+        publisher: { "@id": personId },
+        author: { "@id": personId },
+      };
+
+    case "ProfilePage":
+      return {
+        "@context": baseContext,
+        "@type": "ProfilePage",
+        "@id": data.url ? `${data.url}#profile` : `${siteURL}/#profile`,
+        url: data.url || siteURL,
+        name: data.name || profile.name,
+        description: data.description || profile.summary,
+        inLanguage: data.inLanguage || pageLang,
+        isPartOf: { "@id": websiteId },
+        mainEntity: personNode({
+          jobTitle: data.jobTitle,
+          description: data.description,
+          image: data.image,
+        }),
+      };
+
+    case "Event": {
+      const start = calendarDate(data.date);
+      // Talks are single-day unless content supplies an end date.
+      const end = calendarDate(data.endDate) || start;
+      const isPast =
+        data.date instanceof Date
+          ? data.date.getTime() < Date.now()
+          : false;
+      return {
+        "@context": baseContext,
+        "@type": "Event",
+        name: data.title,
+        description: data.description,
+        startDate: start,
+        endDate: end,
+        eventAttendanceMode: eventAttendance(),
+        eventStatus: isPast
+          ? "https://schema.org/EventScheduled"
+          : "https://schema.org/EventScheduled",
+        location: parsePlace(data.location),
+        organizer: {
+          "@type": "Organization",
+          name: data.event,
+          ...(data.eventUrl ? { url: data.eventUrl } : {}),
+        },
+        performer: {
+          "@type": "Person",
+          "@id": personId,
+          name: siteConfig.author.name,
+          url: siteURL,
+          jobTitle: siteConfig.author.title,
+        },
+        image: data.image,
+        url: data.url,
+        keywords: Array.isArray(data.topics)
+          ? data.topics.join(", ")
+          : data.topics,
+        about: data.type
+          ? { "@type": "Thing", name: String(data.type) }
+          : undefined,
+        // Community talks are free to attend.
+        isAccessibleForFree: true,
+        offers: {
+          "@type": "Offer",
+          price: 0,
+          priceCurrency: "BRL",
+          availability: isPast
+            ? "https://schema.org/SoldOut"
+            : "https://schema.org/InStock",
+          url: data.url,
+          validFrom: start,
+        },
+        inLanguage: data.inLanguage || pageLang,
+      };
+    }
+
+    case "Project":
+      // Case studies: CreativeWork for entity graph (Article is emitted separately).
+      return {
+        "@context": baseContext,
+        "@type": "CreativeWork",
+        name: data.title,
+        description: data.description || data.outcomeSummary,
+        url: data.url,
+        image: data.image || `${siteURL}/og-image.png`,
+        author: { "@id": personId },
+        creator: { "@id": personId },
+        dateCreated: data.year ? `${data.year}-01-01` : undefined,
+        datePublished: data.year ? `${data.year}-01-01` : undefined,
+        keywords: data.techStack?.join(", "),
+        about: data.problem,
+        abstract: data.outcomeSummary,
+        inLanguage: data.inLanguage || pageLang,
+        mainEntityOfPage: data.url
+          ? { "@type": "WebPage", "@id": data.url }
+          : undefined,
+      };
+
+    case "Article":
+      return {
+        "@context": baseContext,
+        "@type": "Article",
+        headline: data.title,
+        description: data.description,
+        author: {
+          "@type": "Person",
+          "@id": personId,
+          name: data.authorName || siteConfig.author.name,
+          url: siteURL,
+          jobTitle: siteConfig.author.title,
+        },
+        datePublished:
+          data.publishDate instanceof Date
+            ? data.publishDate.toISOString()
+            : data.publishDate,
+        dateModified:
+          data.updatedDate instanceof Date
+            ? data.updatedDate.toISOString()
+            : data.updatedDate ||
+              (data.publishDate instanceof Date
+                ? data.publishDate.toISOString()
+                : data.publishDate),
+        image: data.image
+          ? Array.isArray(data.image)
+            ? data.image
+            : [data.image]
+          : [`${siteURL}/og-image.png`],
+        publisher: {
+          "@type": "Person",
+          "@id": personId,
+          name: siteConfig.author.name,
+          url: siteURL,
+        },
+        mainEntityOfPage: {
+          "@type": "WebPage",
+          "@id": data.url || Astro.url.href,
+        },
+        keywords: data.tags?.join(", "),
+        articleSection: data.section,
+        inLanguage: data.inLanguage || pageLang,
+        isAccessibleForFree: true,
+      };
+
+    case "Person":
+      return {
+        "@context": baseContext,
+        ...personNode({
+          name: data.name,
+          jobTitle: data.jobTitle,
+          description: data.description,
+          url: data.url,
+          email: data.email,
+          sameAs: data.socialLinks,
+          image: data.image,
+          knowsAbout: data.skills,
+        }),
+      };
+
+    case "SoftwareApplication": {
+      // Google requires name + offers.price (+ rating/review for rich result).
+      // We never invent AggregateRating. Offer alone still helps entity understanding.
+      const price =
+        typeof data.price === "number"
+          ? data.price
+          : /free|trial|teste|gratuito/i.test(data.pricing || "")
+            ? 0
+            : 0;
+      return {
+        "@context": baseContext,
+        "@type": ["SoftwareApplication", "WebApplication"],
+        name: data.name || data.title,
+        description: data.description || data.tagline,
+        url: data.url,
+        applicationCategory: appCategory(data.category),
+        operatingSystem: data.operatingSystem || "Web",
+        offers: {
+          "@type": "Offer",
+          price,
+          priceCurrency: data.priceCurrency || "BRL",
+          availability: "https://schema.org/InStock",
+          url: data.url,
+          category: data.pricing,
+        },
+        author: { "@id": personId },
+        creator: { "@id": personId },
+        inLanguage: data.inLanguage || pageLang,
+        image: data.image ? absoluteUrl(data.image) : undefined,
+        ...(data.aggregateRating ? { aggregateRating: data.aggregateRating } : {}),
+        ...(data.review ? { review: data.review } : {}),
+      };
+    }
+
+    case "BreadcrumbList":
+      return {
+        "@context": baseContext,
+        "@type": "BreadcrumbList",
+        itemListElement: data.items?.map(
+          (item: { name: string; url: string }, index: number) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            name: item.name,
+            item: item.url.startsWith("http")
+              ? item.url
+              : `${siteURL}${item.url}`,
+          }),
+        ),
+      };
+
+    case "ItemList":
+      return {
+        "@context": baseContext,
+        "@type": "ItemList",
+        name: data.name || "Items",
+        description: data.description,
+        numberOfItems: data.items?.length,
+        itemListElement: data.items?.map(
+          (
+            item: {
+              name: string;
+              url: string;
+              description?: string;
+              itemType?: string;
+            },
+            index: number,
+          ) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            name: item.name,
+            url: item.url.startsWith("http")
+              ? item.url
+              : `${siteURL}${item.url}`,
+            ...(item.description ? { description: item.description } : {}),
+            ...(item.itemType
+              ? { item: { "@type": item.itemType, name: item.name, url: item.url } }
+              : {}),
+          }),
+        ),
+      };
+
+    default:
+      return null;
+  }
+}
+
+const structuredData = generateStructuredData(type, data);
+
+function cleanObject(obj: any): any {
+  if (obj === null || obj === undefined) return null;
+  if (typeof obj !== "object") return obj;
+  if (Array.isArray(obj)) {
+    return obj.map(cleanObject).filter((item) => item !== undefined && item !== null);
+  }
+
+  const cleaned: any = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== undefined && value !== null) {
+      cleaned[key] = cleanObject(value);
+    }
+  }
+  return cleaned;
+}
+
+const cleanedData = cleanObject(structuredData);
+---
+
+{
+  cleanedData && (
+    <script
+      is:inline
+      type="application/ld+json"
+      set:html={JSON.stringify(cleanedData, null, 2)}
+    />
+  )
+}

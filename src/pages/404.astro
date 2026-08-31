@@ -1,0 +1,223 @@
+---
+/**
+ * 404 Not Found Page
+ *
+ * Bilingual recovery: EN | PT-BR columns, same link pattern throughout.
+ * Route: /404
+ */
+
+import { siteConfig } from '../config';
+
+const origin = siteConfig.url.replace(/\/$/, '');
+---
+
+<!DOCTYPE html>
+<html lang={siteConfig.language}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>404 · Page not found · Página não encontrada</title>
+    <meta
+      name="description"
+      content="This page was not found. Esta página não foi encontrada."
+    />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="canonical" href={`${origin}/404/`} />
+
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="mask-icon" href="/favicon.svg" color="#000000" />
+
+    <style>
+      :root {
+        --color-bg: #eef1ee;
+        --color-text: #101916;
+        --color-text-secondary: #2a3832;
+        --color-text-muted: #4a5c54;
+        --color-border: #c5cdc8;
+        --color-border-subtle: #d5dcd7;
+        --font-display: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+        --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+        --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+        --focus-ring-width: 2px;
+        --focus-ring-color: #176b60;
+        --focus-ring-offset: 2px;
+      }
+
+      [data-theme="dark"] {
+        --color-bg: #0c0f0e;
+        --color-text: #e8ebe9;
+        --color-text-secondary: #a8b3ad;
+        --color-text-muted: #7d8a84;
+        --color-border: #2a3330;
+        --color-border-subtle: #1e2623;
+        --focus-ring-color: #2a9d8f;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: var(--font-sans);
+        background: var(--color-bg);
+        color: var(--color-text);
+        line-height: 1.5;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2.5rem 1.5rem;
+      }
+
+      .container {
+        max-width: 40rem;
+        width: 100%;
+      }
+
+      .error-code {
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 500;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--color-text-muted);
+        margin-bottom: 0.85rem;
+      }
+
+      h1 {
+        font-family: var(--font-display);
+        font-size: clamp(1.65rem, 4vw, 2.1rem);
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        line-height: 1.2;
+        margin-bottom: 0.75rem;
+        text-wrap: balance;
+      }
+
+      .description {
+        font-size: 1.025rem;
+        line-height: 1.65;
+        color: var(--color-text-secondary);
+        margin-bottom: 2rem;
+        max-width: 34rem;
+      }
+
+      .locales {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.75rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--color-border);
+      }
+
+      @media (min-width: 560px) {
+        .locales {
+          grid-template-columns: 1fr 1fr;
+          column-gap: 2.25rem;
+          column-rule: 1px solid var(--color-border-subtle);
+          gap: 0;
+        }
+      }
+
+      .locale {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+      }
+
+      .locale-label {
+        font-family: var(--font-mono);
+        font-size: 0.625rem;
+        font-weight: 500;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--color-text-muted);
+        margin-bottom: 0.65rem;
+      }
+
+      .locale a {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        min-height: 2.5rem;
+        padding: 0.25rem 0;
+        font-size: 0.975rem;
+        font-weight: 500;
+        color: var(--color-text);
+        text-decoration: none;
+        width: fit-content;
+      }
+
+      .locale a::after {
+        content: "→";
+        font-weight: 400;
+        color: var(--color-text-muted);
+        transition: transform 0.15s ease;
+      }
+
+      .locale a:hover,
+      .locale a:focus-visible {
+        text-decoration: underline;
+        text-underline-offset: 0.18em;
+        text-decoration-thickness: 1.5px;
+        text-decoration-color: color-mix(in srgb, var(--color-text) 70%, transparent);
+      }
+
+      .locale a:hover::after,
+      .locale a:focus-visible::after {
+        transform: translateX(3px);
+        color: var(--color-text);
+      }
+
+      .locale a:focus-visible {
+        outline: var(--focus-ring-width) solid var(--focus-ring-color);
+        outline-offset: var(--focus-ring-offset);
+        border-radius: 2px;
+      }
+
+      .locale a.primary {
+        font-weight: 600;
+      }
+    </style>
+
+    <script is:inline>
+      (function () {
+        const stored = localStorage.getItem("theme");
+        const theme =
+          stored === "light" || stored === "dark" ? stored : "light";
+        document.documentElement.setAttribute("data-theme", theme);
+      })();
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <p class="error-code">404</p>
+
+      <h1>Page not found · Página não encontrada</h1>
+
+      <p class="description">
+        That URL is not on this site. Esse endereço não existe neste site.
+      </p>
+
+      <div class="locales">
+        <nav class="locale" aria-label="English">
+          <p class="locale-label">English</p>
+          <a class="primary" href="/en/">Home</a>
+          <a href="/en/projects/">Cases</a>
+          <a href="/en/contact/">Contact</a>
+        </nav>
+
+        <nav class="locale" aria-label="Português">
+          <p class="locale-label">Português</p>
+          <a class="primary" href="/pt-BR/">Início</a>
+          <a href="/pt-BR/projects/">Cases</a>
+          <a href="/pt-BR/contact/">Contato</a>
+        </nav>
+      </div>
+    </div>
+  </body>
+</html>

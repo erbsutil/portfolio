@@ -1,0 +1,237 @@
+---
+/**
+ * Dieta e Treino case body (screenshots). Locale-aware copy.
+ */
+import { Image } from "astro:assets";
+import type { AppLocale } from "../../i18n/config";
+import screenTelegram from "../../assets/images/screens/fit/telegram-chat.png";
+import screenHomeMacros from "../../assets/images/screens/fit/home-macros.png";
+import screenHomeConsistency from "../../assets/images/screens/fit/home-consistency.png";
+import screenTrainingConsistency from "../../assets/images/screens/fit/training-consistency.png";
+import screenTrainingVolume from "../../assets/images/screens/fit/training-volume.png";
+import screenGroups from "../../assets/images/screens/fit/groups.png";
+import screenBilling from "../../assets/images/screens/fit/billing.png";
+
+interface Props {
+  locale: AppLocale;
+}
+
+const { locale } = Astro.props;
+const pt = locale === "pt-BR";
+
+const copy = pt
+  ? {
+      snapshots: "Capturas do produto",
+      snapshotsIntroBefore: "Em produção em ",
+      snapshotsIntroAfter:
+        ". O registro fica no Telegram; o painel abre por um link do bot. As telas abaixo são do produto ao vivo (interface em português).",
+      telegram: "Telegram com Ana e Renan",
+      telegramBodyBefore:
+        "Pergunte à Ana pelos macros do dia (ou ao Renan pelo treino). Ela responde no chat e oferece ",
+      telegramBodyAfter: " quando você quer o resumo completo.",
+      telegramAlt:
+        "Chat no Telegram com o bot Ana e Renan mostrando resumo de macros e o botão Ver no Dashboard",
+      telegramCaption:
+        "Chat privado: macros do dia e um toque para o painel. Sem login extra.",
+      summary: "Resumo e consistência da dieta",
+      macrosAlt:
+        "Aba Resumo do Dieta e Treino com saudação e cards de calorias, proteína, carboidrato e gordura",
+      consistencyAlt:
+        "Mapa de consistência da dieta nos últimos ~70 dias no Dieta e Treino",
+      summaryCaption:
+        "Resumo: macros estimados do dia e, em seguida, a grade de consistência da dieta em cerca de 70 dias (mesma lógica dos calendários de contribuição).",
+      training: "Progresso nos treinos",
+      trainingConsistencyAlt:
+        "Aba Treinos do Dieta e Treino com mapa de consistência de treinos",
+      trainingVolumeAlt:
+        "Volume de treino por grupo muscular e seção de volume de cardio no Dieta e Treino",
+      trainingCaption:
+        "Treinos: calendário de consistência, depois volume de força por grupo e volume de cardio. Se estiver vazio, o painel aponta de volta ao Telegram para registrar.",
+      groups: "Grupos e progresso entre pares",
+      groupsBodyBefore: "Se você autorizar ",
+      groupsBodyMid:
+        " no bot, a aba ",
+      groupsBodyMid2:
+        " lista esses chats e mostra a ",
+      groupsBodyMid3:
+        " de cada membro lado a lado: o mesmo tipo de mapa da sua visão, mais totais seguros para ver quem está constante ou esfriando; ",
+      groupsBodyAfter:
+        " o texto completo das refeições de outra pessoa. A autorização é explícita (nunca automática).",
+      groupsAlt:
+        "Aba Grupos do Dieta e Treino explicando ranking com autorização e privacidade na comparação entre pares",
+      groupsCaption:
+        "Grupos: o comparativo só aparece depois que cada pessoa autoriza no Telegram; só agregados, sem o prato de ninguém.",
+      subscription: "Assinatura",
+      billingAlt:
+        "Tela de assinatura do Dieta e Treino com planos mensal e anual durante o teste de 14 dias",
+      billingCaption:
+        "Assinatura: R$29/mês ou R$290/ano durante o teste de 14 dias, com Stripe Checkout e portal para mudanças depois.",
+    }
+  : {
+      snapshots: "Product snapshots",
+      snapshotsIntroBefore: "Live at ",
+      snapshotsIntroAfter:
+        ". Logging stays in Telegram; the panel opens from a bot link. Screens below are from the live product (Portuguese UI).",
+      telegram: "Telegram with Ana and Renan",
+      telegramBodyBefore:
+        "Ask Ana about today’s macros (or Renan about training). She answers in chat and offers ",
+      telegramBodyAfter: " when you want the full summary.",
+      telegramAlt:
+        "Telegram chat with Ana e Renan bot showing macro summary and Ver no Dashboard button",
+      telegramCaption:
+        "Private chat: day’s macros and a one-tap link to the panel. No extra login.",
+      summary: "Summary and diet consistency",
+      macrosAlt:
+        "Dieta e Treino summary tab with greeting and calorie protein carb fat cards",
+      consistencyAlt:
+        "Dieta e Treino diet consistency heatmap for the last 70 days",
+      summaryCaption:
+        "Summary: estimated macros for the day, then the ~70-day diet consistency grid (same framing as contribution calendars).",
+      training: "Training progress",
+      trainingConsistencyAlt:
+        "Dieta e Treino training tab with workout consistency heatmap",
+      trainingVolumeAlt:
+        "Dieta e Treino training volume by muscle group and cardio volume section",
+      trainingCaption:
+        "Training: consistency calendar, then strength volume by group and cardio volume. Empty states point back to Telegram to log.",
+      groups: "Groups and peer progress",
+      groupsBodyBefore: "If you authorize ",
+      groupsBodyMid: " in the bot, the ",
+      groupsBodyMid2: " tab lists those chats and shows ",
+      groupsBodyMid3:
+        " side by side: the same heatmaps as your own view, plus safe aggregates so you can see who is consistent or falling behind; ",
+      groupsBodyAfter:
+        " the full text of someone else’s meals. Opt-in is explicit (never automatic).",
+      groupsAlt:
+        "Dieta e Treino Groups tab explaining opt-in ranking and privacy for peer comparison",
+      groupsCaption:
+        "Groups: peer comparison only after each person opts in on Telegram; aggregates only, never another person’s meal text.",
+      subscription: "Subscription",
+      billingAlt:
+        "Dieta e Treino subscription screen with monthly and annual plans during 14-day trial",
+      billingCaption:
+        "Subscription: R$29/month or R$290/year during the 14-day trial, with Stripe Checkout and a portal for later changes.",
+    };
+---
+
+<>
+  <h2>{copy.snapshots}</h2>
+  <p>
+    {copy.snapshotsIntroBefore}
+    <a
+      href="https://dietaetreino.erbsu.com"
+      target="_blank"
+      rel="noopener noreferrer">dietaetreino.erbsu.com</a
+    >
+    {copy.snapshotsIntroAfter}
+  </p>
+
+  <h3>{copy.telegram}</h3>
+  <p>
+    {copy.telegramBodyBefore}<strong>Ver no Dashboard</strong>{
+      copy.telegramBodyAfter
+    }
+  </p>
+
+  <figure class="case-study-shot case-study-shot--phone">
+    <Image
+      src={screenTelegram}
+      alt={copy.telegramAlt}
+      widths={[280, 416, 520]}
+      sizes="(max-width: 480px) 92vw, 416px"
+      loading="lazy"
+      decoding="async"
+      class="case-study-shot__img"
+    />
+    <figcaption>{copy.telegramCaption}</figcaption>
+  </figure>
+
+  <h3>{copy.summary}</h3>
+  <figure class="case-study-shot case-study-shot--phone case-study-shot--pair">
+    <div class="case-study-shot__pair">
+      <Image
+        src={screenHomeMacros}
+        alt={copy.macrosAlt}
+        widths={[280, 416, 520]}
+        sizes="(max-width: 640px) 92vw, 45vw"
+        loading="lazy"
+        decoding="async"
+        class="case-study-shot__img"
+      />
+      <Image
+        src={screenHomeConsistency}
+        alt={copy.consistencyAlt}
+        widths={[280, 416, 520]}
+        sizes="(max-width: 640px) 92vw, 45vw"
+        loading="lazy"
+        decoding="async"
+        class="case-study-shot__img"
+      />
+    </div>
+    <figcaption>{copy.summaryCaption}</figcaption>
+  </figure>
+
+  <h3>{copy.training}</h3>
+  <figure class="case-study-shot case-study-shot--phone case-study-shot--pair">
+    <div class="case-study-shot__pair">
+      <Image
+        src={screenTrainingConsistency}
+        alt={copy.trainingConsistencyAlt}
+        widths={[280, 416, 520]}
+        sizes="(max-width: 640px) 92vw, 45vw"
+        loading="lazy"
+        decoding="async"
+        class="case-study-shot__img"
+      />
+      <Image
+        src={screenTrainingVolume}
+        alt={copy.trainingVolumeAlt}
+        widths={[280, 416, 520]}
+        sizes="(max-width: 640px) 92vw, 45vw"
+        loading="lazy"
+        decoding="async"
+        class="case-study-shot__img"
+      />
+    </div>
+    <figcaption>{copy.trainingCaption}</figcaption>
+  </figure>
+
+  <h3>{copy.groups}</h3>
+  <p>
+    {copy.groupsBodyBefore}<strong>{pt ? "grupos do Telegram" : "Telegram groups"}</strong
+    >{copy.groupsBodyMid}<strong>{pt ? "Grupos" : "Groups"}</strong
+    >{copy.groupsBodyMid2}<strong
+      >{pt
+        ? "consistência de dieta e treino"
+        : "each member’s diet and workout consistency"}</strong
+    >{copy.groupsBodyMid3}<strong>{pt ? "não" : "not"}</strong
+    >{copy.groupsBodyAfter}
+  </p>
+
+  <figure class="case-study-shot case-study-shot--phone">
+    <Image
+      src={screenGroups}
+      alt={copy.groupsAlt}
+      widths={[280, 416, 520]}
+      sizes="(max-width: 480px) 92vw, 416px"
+      loading="lazy"
+      decoding="async"
+      class="case-study-shot__img"
+    />
+    <figcaption>{copy.groupsCaption}</figcaption>
+  </figure>
+
+  <h3>{copy.subscription}</h3>
+  <figure class="case-study-shot case-study-shot--phone">
+    <Image
+      src={screenBilling}
+      alt={copy.billingAlt}
+      widths={[280, 416, 520]}
+      sizes="(max-width: 480px) 92vw, 416px"
+      loading="lazy"
+      decoding="async"
+      class="case-study-shot__img"
+    />
+    <figcaption>{copy.billingCaption}</figcaption>
+  </figure>
+</>

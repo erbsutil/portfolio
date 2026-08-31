@@ -1,0 +1,747 @@
+---
+/**
+ * Navigation
+ *
+ * Desktop: brand + links | locale + theme
+ * Mobile: brand | ☰ only; locale + theme live in the panel (UX Option A)
+ */
+import { siteConfig } from "../config";
+import ThemeToggle from "./ThemeToggle.astro";
+import LocaleSwitcher from "./LocaleSwitcher.astro";
+import {
+  defaultLocale,
+  stripLocalePrefix,
+  withLocale,
+  type AppLocale,
+} from "../i18n/config";
+import { getUi } from "../i18n/ui";
+
+interface Props {
+  locale?: AppLocale;
+}
+
+const { locale = defaultLocale } = Astro.props;
+const ui = getUi(locale);
+const currentPath = Astro.url.pathname;
+const { pathnameWithoutLocale } = stripLocalePrefix(currentPath);
+
+const navItems = [
+  { label: ui.nav.cases, href: withLocale(locale, "/projects") },
+  { label: ui.nav.products, href: withLocale(locale, "/products") },
+  { label: ui.nav.community, href: withLocale(locale, "/community") },
+  { label: ui.nav.contact, href: withLocale(locale, "/contact") },
+];
+
+const homeHref = withLocale(locale, "/");
+
+const isActive = (href: string) => {
+  const bare = stripLocalePrefix(href).pathnameWithoutLocale;
+  if (bare === "/") {
+    return pathnameWithoutLocale === "/";
+  }
+  return (
+    pathnameWithoutLocale === bare ||
+    pathnameWithoutLocale.startsWith(`${bare}/`)
+  );
+};
+
+const isHome = pathnameWithoutLocale === "/";
+---
+
+<nav class="site-nav" aria-label={ui.navAria} data-site-nav>
+  <div class="nav-bar">
+    <div class="nav-primary">
+      <a
+        href={homeHref}
+        class:list={["nav-brand", "brand", { "nav-brand--active": isHome }]}
+        aria-current={isHome ? "page" : undefined}
+      >
+        {siteConfig.author.name}
+      </a>
+
+      <div class="nav-desktop">
+        <ul class="nav-list">
+          {
+            navItems.map((item) => (
+              <li class="nav-item">
+                <a
+                  href={item.href}
+                  class:list={[
+                    "nav-link",
+                    { "nav-link--active": isActive(item.href) },
+                  ]}
+                  aria-current={isActive(item.href) ? "page" : undefined}
+                >
+                  {item.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+
+    <div class="nav-end">
+      <div class="nav-end-desktop">
+        <LocaleSwitcher locale={locale} />
+        <ThemeToggle toLight={ui.theme.toLight} toDark={ui.theme.toDark} />
+      </div>
+      <button
+        type="button"
+        class="nav-menu-btn"
+        aria-expanded="false"
+        aria-controls="site-nav-panel"
+        aria-label={ui.menu}
+        data-nav-toggle
+        data-label-menu={ui.menu}
+        data-label-close={ui.close}
+      >
+        <span class="nav-menu-btn__icon" aria-hidden="true">
+          <span class="nav-menu-btn__line"></span>
+          <span class="nav-menu-btn__line"></span>
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <div
+    class="nav-backdrop"
+    data-nav-backdrop
+    hidden
+    aria-hidden="true"
+  ></div>
+
+  <div
+    id="site-nav-panel"
+    class="nav-panel"
+    data-nav-panel
+    hidden
+  >
+    <ul class="nav-panel-list">
+      <li>
+        <a
+          href={homeHref}
+          class:list={[
+            "nav-panel-link",
+            { "nav-panel-link--active": isHome },
+          ]}
+          aria-current={isHome ? "page" : undefined}
+          data-nav-panel-link
+        >
+          {ui.navHome}
+        </a>
+      </li>
+      {
+        navItems.map((item) => (
+          <li>
+            <a
+              href={item.href}
+              class:list={[
+                "nav-panel-link",
+                { "nav-panel-link--active": isActive(item.href) },
+              ]}
+              aria-current={isActive(item.href) ? "page" : undefined}
+              data-nav-panel-link
+            >
+              {item.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+
+    <div class="nav-panel-prefs" role="group" aria-label={ui.preferences}>
+      <p class="nav-panel-prefs__kicker">{ui.preferences}</p>
+      <div class="nav-panel-prefs__row">
+        <span class="nav-panel-prefs__label">{ui.language}</span>
+        <LocaleSwitcher locale={locale} />
+      </div>
+      <div class="nav-panel-prefs__row">
+        <span class="nav-panel-prefs__label">{ui.themeLabel}</span>
+        <ThemeToggle
+          labeled
+          labelLight={ui.theme.light}
+          labelDark={ui.theme.dark}
+          toLight={ui.theme.toLight}
+          toDark={ui.theme.toDark}
+        />
+      </div>
+    </div>
+  </div>
+</nav>
+
+<script>
+  function stripLocalePath(pathname: string) {
+    const parts = pathname.split("/").filter(Boolean);
+    if (parts[0] === "en" || parts[0] === "pt-BR") {
+      const rest = parts.slice(1).join("/");
+      return rest ? `/${rest}` : "/";
+    }
+    return pathname || "/";
+  }
+
+  function updateActiveNav() {
+    const currentPath = window.location.pathname;
+    const barePath = stripLocalePath(currentPath);
+    const links = document.querySelectorAll(".nav-link, .nav-panel-link");
+
+    links.forEach((link) => {
+      const href = link.getAttribute("href");
+      let active = false;
+
+      if (href) {
+        const bareHref = stripLocalePath(href);
+        if (bareHref === "/") {
+          active = barePath === "/";
+        } else {
+          active =
+            barePath === bareHref || barePath.startsWith(`${bareHref}/`);
+        }
+      }
+
+      link.classList.toggle(
+        "nav-link--active",
+        active && link.classList.contains("nav-link"),
+      );
+      link.classList.toggle(
+        "nav-panel-link--active",
+        active && link.classList.contains("nav-panel-link"),
+      );
+
+      if (active) {
+        link.setAttribute("aria-current", "page");
+      } else {
+        link.removeAttribute("aria-current");
+      }
+    });
+
+    const brand = document.querySelector(".nav-brand");
+    if (brand) {
+      const home = barePath === "/";
+      brand.classList.toggle("nav-brand--active", home);
+      if (home) brand.setAttribute("aria-current", "page");
+      else brand.removeAttribute("aria-current");
+    }
+  }
+
+  function setupMobileNav() {
+    const nav = document.querySelector("[data-site-nav]");
+    if (!(nav instanceof HTMLElement)) return;
+
+    const toggle = nav.querySelector("[data-nav-toggle]");
+    const panel = nav.querySelector("[data-nav-panel]");
+    const backdrop = nav.querySelector("[data-nav-backdrop]");
+
+    if (
+      !(toggle instanceof HTMLButtonElement) ||
+      !(panel instanceof HTMLElement) ||
+      !(backdrop instanceof HTMLElement)
+    ) {
+      return;
+    }
+
+    const existing = (nav as HTMLElement & { __navAbort?: AbortController })
+      .__navAbort;
+    if (existing) existing.abort();
+    const controller = new AbortController();
+    (nav as HTMLElement & { __navAbort?: AbortController }).__navAbort =
+      controller;
+    const { signal } = controller;
+
+    const isOpen = () => toggle.getAttribute("aria-expanded") === "true";
+
+    const getPanelFocusable = () =>
+      [
+        ...panel.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ].filter(
+        (el) =>
+          !el.hasAttribute("disabled") &&
+          el.getAttribute("aria-hidden") !== "true",
+      );
+
+    const setPageInert = (inert: boolean) => {
+      document.querySelectorAll(".page-body, .site-footer").forEach((el) => {
+        if (!(el instanceof HTMLElement)) return;
+        if (inert) el.setAttribute("inert", "");
+        else el.removeAttribute("inert");
+      });
+    };
+
+    const setOpen = (open: boolean) => {
+      toggle.setAttribute("aria-expanded", open ? "true" : "false");
+      toggle.setAttribute(
+        "aria-label",
+        open
+          ? toggle.dataset.labelClose || "Close"
+          : toggle.dataset.labelMenu || "Menu",
+      );
+      toggle.classList.toggle("nav-menu-btn--open", open);
+      panel.classList.toggle("nav-panel--open", open);
+      backdrop.classList.toggle("nav-backdrop--open", open);
+      panel.hidden = !open;
+      backdrop.hidden = !open;
+      document.body.classList.toggle("nav-menu-open", open);
+      setPageInert(open);
+
+      if (open) {
+        const first = getPanelFocusable()[0];
+        queueMicrotask(() => first?.focus());
+      } else {
+        queueMicrotask(() => toggle.focus());
+      }
+    };
+
+    const close = () => setOpen(false);
+
+    toggle.addEventListener(
+      "click",
+      () => {
+        setOpen(!isOpen());
+      },
+      { signal },
+    );
+
+    backdrop.addEventListener("click", close, { signal });
+
+    panel.querySelectorAll("[data-nav-panel-link]").forEach((link) => {
+      link.addEventListener("click", close, { signal });
+    });
+
+    document.addEventListener(
+      "keydown",
+      (event) => {
+        if (!isOpen()) return;
+
+        if (event.key === "Escape") {
+          event.preventDefault();
+          close();
+          return;
+        }
+
+        if (event.key !== "Tab") return;
+
+        const items = getPanelFocusable();
+        if (!items.length) return;
+
+        const first = items[0];
+        const last = items[items.length - 1];
+        const active = document.activeElement;
+
+        if (event.shiftKey) {
+          if (active === first || active === toggle) {
+            event.preventDefault();
+            last.focus();
+          }
+        } else if (active === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      },
+      { signal },
+    );
+
+    document.addEventListener(
+      "pointerdown",
+      (event) => {
+        if (!isOpen()) return;
+        const target = event.target;
+        if (!(target instanceof Node)) return;
+        if (nav.contains(target)) return;
+        close();
+      },
+      { signal },
+    );
+
+    panel.classList.remove("nav-panel--open");
+    backdrop.classList.remove("nav-backdrop--open");
+    panel.hidden = true;
+    backdrop.hidden = true;
+    document.body.classList.remove("nav-menu-open");
+    setPageInert(false);
+    toggle.setAttribute("aria-expanded", "false");
+    toggle.setAttribute(
+      "aria-label",
+      toggle.dataset.labelMenu || "Menu",
+    );
+    toggle.classList.remove("nav-menu-btn--open");
+  }
+
+  document.addEventListener("astro:page-load", () => {
+    updateActiveNav();
+    setupMobileNav();
+  });
+  updateActiveNav();
+  setupMobileNav();
+</script>
+
+<style is:global>
+  @media (max-width: 768px) {
+    body.nav-menu-open {
+      overflow: hidden;
+    }
+  }
+</style>
+
+<style>
+  .site-nav {
+    position: relative;
+    z-index: 40;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-bg);
+    width: 100%;
+    max-width: 100vw;
+  }
+
+  .nav-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    min-height: 3.5rem;
+    padding: 0.85rem 1.5rem;
+    max-width: var(--max-width-content);
+    margin: 0 auto;
+  }
+
+  .nav-primary {
+    display: flex;
+    align-items: center;
+    gap: 2.75rem;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .nav-brand {
+    flex-shrink: 0;
+    font-family: var(--font-display);
+    font-size: 1.125rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--color-text);
+    text-decoration: none;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    padding: 0;
+  }
+
+  .nav-brand:hover,
+  .nav-brand--active {
+    color: var(--color-text);
+  }
+
+  .nav-brand:focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
+    border-radius: 2px;
+  }
+
+  .nav-desktop {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+  }
+
+  .nav-list {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 1.85rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .nav-item {
+    margin: 0;
+    display: flex;
+    align-items: center;
+  }
+
+  .nav-link {
+    display: inline-flex;
+    align-items: center;
+    color: var(--color-text-secondary);
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    line-height: 1;
+    padding: 0.65rem 0.15rem;
+    min-height: 2.75rem;
+    transition: color 0.2s ease;
+    white-space: nowrap;
+  }
+
+  .nav-link:hover,
+  .nav-link--active {
+    color: var(--color-text);
+  }
+
+  .nav-link:focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
+    color: var(--color-text);
+  }
+
+  .nav-end {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .nav-end-desktop {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+  }
+
+  .nav-menu-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: var(--border-radius-sm);
+    background: transparent;
+    color: var(--color-text);
+    cursor: pointer;
+    transition:
+      background 0.2s ease,
+      border-color 0.2s ease;
+  }
+
+  .nav-menu-btn:hover {
+    background: var(--color-bg-secondary);
+  }
+
+  .nav-menu-btn:focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
+  }
+
+  .nav-menu-btn__icon {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 18px;
+  }
+
+  .nav-menu-btn__line {
+    display: block;
+    height: 1.5px;
+    width: 100%;
+    background: currentColor;
+    border-radius: 1px;
+    transition:
+      transform 0.2s ease,
+      opacity 0.2s ease;
+    transform-origin: center;
+  }
+
+  .nav-menu-btn--open .nav-menu-btn__line:first-child {
+    transform: translateY(3.25px) rotate(45deg);
+  }
+
+  .nav-menu-btn--open .nav-menu-btn__line:last-child {
+    transform: translateY(-3.25px) rotate(-45deg);
+  }
+
+  .nav-backdrop,
+  .nav-panel {
+    display: none;
+  }
+
+  .nav-panel-prefs {
+    display: none;
+  }
+
+  @media (max-width: 768px) {
+    .nav-bar {
+      position: relative;
+      z-index: 2;
+      gap: 0.75rem;
+      padding: 0.65rem 1rem;
+      min-height: 3.5rem;
+      background: var(--color-bg);
+    }
+
+    .nav-primary {
+      gap: 0;
+    }
+
+    .nav-end-desktop {
+      display: none;
+    }
+
+    .nav-menu-btn {
+      display: inline-flex;
+    }
+
+    .nav-desktop {
+      display: none;
+    }
+
+    .nav-brand {
+      font-size: 1.0625rem;
+    }
+
+    .nav-backdrop {
+      display: block;
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      border: 0;
+      padding: 0;
+      margin: 0;
+      background: color-mix(in srgb, var(--color-bg) 55%, transparent);
+      backdrop-filter: blur(2px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.18s ease;
+    }
+
+    .nav-backdrop--open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .nav-panel {
+      display: block;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      z-index: 2;
+      border-top: 1px solid var(--color-border);
+      border-bottom: 1px solid var(--color-border);
+      background: var(--color-bg);
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      pointer-events: none;
+      transition:
+        max-height 0.22s ease,
+        opacity 0.18s ease;
+    }
+
+    .nav-panel--open {
+      max-height: min(32rem, calc(100dvh - 3.5rem));
+      opacity: 1;
+      pointer-events: auto;
+      overflow-y: auto;
+    }
+
+    .nav-panel-list {
+      list-style: none;
+      margin: 0;
+      padding: 0.5rem 0.75rem 0.35rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .nav-panel-link {
+      display: flex;
+      align-items: center;
+      min-height: 3rem;
+      padding: 0.75rem 0.9rem;
+      border-radius: var(--border-radius-sm);
+      color: var(--color-text-secondary);
+      font-size: 1.0625rem;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      text-decoration: none;
+      transition:
+        background 0.15s ease,
+        color 0.15s ease;
+    }
+
+    .nav-panel-link:hover,
+    .nav-panel-link:focus-visible {
+      color: var(--color-text);
+      background: var(--color-bg-secondary);
+      outline: none;
+    }
+
+    .nav-panel-link--active {
+      color: var(--color-text);
+      background: var(--color-bg-secondary);
+    }
+
+    .nav-panel-link:focus-visible {
+      box-shadow: inset 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+    }
+
+    .nav-panel-prefs {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin: 0.35rem 0.75rem 1rem;
+      padding: 0.85rem 0.9rem 1rem;
+      border-top: 1px solid var(--color-border-subtle);
+    }
+
+    .nav-panel-prefs__kicker {
+      margin: 0;
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+    }
+
+    .nav-panel-prefs__row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      min-height: 2.5rem;
+    }
+
+    .nav-panel-prefs__label {
+      font-size: 0.9375rem;
+      font-weight: 500;
+      color: var(--color-text-secondary);
+    }
+
+    .nav-panel-prefs :global(.locale-switch) {
+      font-size: 0.8125rem;
+      gap: 0.35rem;
+    }
+
+    .nav-panel-prefs :global(.locale-switch__link) {
+      min-width: 3rem;
+      min-height: 2.75rem;
+      padding: 0.55rem 0.7rem;
+      border-radius: var(--border-radius-sm);
+    }
+
+    .nav-panel-prefs :global(.locale-switch__link:hover),
+    .nav-panel-prefs :global(.locale-switch__link:focus-visible) {
+      background: var(--color-bg-secondary);
+    }
+
+    .nav-panel-prefs :global(.theme-toggle:not(.theme-toggle--labeled)) {
+      width: 2.75rem;
+      height: 2.75rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nav-panel,
+    .nav-backdrop,
+    .nav-menu-btn__line {
+      transition: none;
+    }
+  }
+</style>

@@ -1,0 +1,1064 @@
+---
+/**
+ * Case Study Detail Page
+ *
+ * Route: /[locale]/projects/[slug]
+ */
+
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import SEO from "../../../components/SEO.astro";
+import StructuredData from "../../../components/StructuredData.astro";
+import ScrollToTop from "../../../components/ScrollToTop.astro";
+import BackLink from "../../../components/BackLink.astro";
+import RelatedContent from "../../../components/RelatedContent.astro";
+import ReaderFeed from "../../../components/ReaderFeed.astro";
+import MetricVisualization from "../../../components/MetricVisualization.astro";
+import StackbriefBody from "../../../components/case-bodies/StackbriefBody.astro";
+import DiarioFitBody from "../../../components/case-bodies/DiarioFitBody.astro";
+import { getCollection, getEntry, render } from "astro:content";
+import {
+  calculateReadingTime,
+  formatReadingTime,
+} from "../../../utils/readingTime";
+import { siteConfig } from "../../../config";
+import { withLocale } from "../../../i18n/config";
+import { localeFromParams, localeStaticPaths } from "../../../i18n/utils";
+import { getUi } from "../../../i18n/ui";
+import { localizeProjectData } from "../../../i18n/content/localize";
+import { getCaseCover } from "../../../lib/caseCovers";
+import { Image, getImage } from "astro:assets";
+
+export async function getStaticPaths() {
+  const projects = await getCollection("projects");
+  return localeStaticPaths().flatMap(({ params: { locale } }) =>
+    projects.map((project) => ({
+      params: { locale, slug: project.id },
+    })),
+  );
+}
+
+const locale = localeFromParams(Astro.params.locale);
+const ui = getUi(locale);
+const { slug } = Astro.params;
+
+const project = await getEntry("projects", slug!);
+
+if (!project) {
+  return Astro.redirect("/404");
+}
+
+const localizedData = localizeProjectData(
+  project.id,
+  project.data as Record<string, unknown>,
+  locale,
+) as typeof project.data;
+
+const hasLocalizedBody =
+  project.id === "stackbrief" ||
+  project.id === "diario-fit";
+const { Content } = hasLocalizedBody
+  ? { Content: undefined }
+  : await render(project);
+
+const {
+  title,
+  role,
+  year,
+  duration,
+  teamSize,
+  outcomeSummary,
+  overview,
+  problem,
+  constraints,
+  approach,
+  keyDecisions,
+  techStack,
+  impact,
+  learnings,
+  relatedProjects,
+  status,
+  isMeta,
+} = localizedData;
+
+const statusConfig = {
+  completed: { label: ui.caseStudy.statusCompleted, class: "status--completed" },
+  ongoing: { label: ui.caseStudy.statusOngoing, class: "status--ongoing" },
+  archived: { label: ui.caseStudy.statusArchived, class: "status--archived" },
+};
+const statusInfo = statusConfig[status || "completed"];
+
+const allText = [
+  overview,
+  problem,
+  approach,
+  ...constraints,
+  ...keyDecisions.map(
+    (d) => `${d.decision} ${d.reasoning} ${d.alternatives?.join(" ") || ""}`,
+  ),
+  impact.qualitative,
+  ...learnings,
+  hasLocalizedBody ? "" : project.body || "",
+].join(" ");
+const readingTime = formatReadingTime(
+  calculateReadingTime(allText),
+  locale === "pt-BR" ? "pt-BR" : "en",
+);
+
+const rejectedPullRaw = keyDecisions
+  .flatMap((d) => d.alternatives ?? [])
+  .find(Boolean);
+const rejectedPull = rejectedPullRaw
+  ?.replace(/\s*\((?:rejeitado|rejected)\s*:[^)]*\)/gi, "")
+  .trim();
+
+const pageUrl = new URL(
+  withLocale(locale, `/projects/${project.id}`),
+  siteConfig.url,
+).href;
+const publishDate = new Date(`${year}-01-01T12:00:00.000Z`);
+const seoDescription =
+  outcomeSummary.length > 160
+    ? `${outcomeSummary.slice(0, 157).trimEnd()}…`
+    : outcomeSummary;
+
+const projectsPath = withLocale(locale, "/projects");
+const caseCover = getCaseCover(project.id);
+
+let caseImageUrl: string | undefined;
+if (caseCover) {
+  const optimized = await getImage({ src: caseCover, width: 1200 });
+  caseImageUrl = new URL(optimized.src, siteConfig.url).href;
+}
+
+const allProjects = await getCollection("projects");
+const readerItems = allProjects
+  .map((entry) => {
+    const data = localizeProjectData(
+      entry.id,
+      entry.data as Record<string, unknown>,
+      locale,
+    ) as typeof entry.data;
+    return {
+      slug: entry.id,
+      title: data.title,
+      url: withLocale(locale, `/projects/${entry.id}`),
+      year: data.year,
+      order: data.order ?? 999,
+    };
+  })
+  .sort((a, b) => {
+    const y = b.year - a.year;
+    if (y !== 0) return y;
+    return a.order - b.order;
+  })
+  .map(({ slug, title, url }) => ({ slug, title, url }));
+---
+
+<BaseLayout locale={locale}>
+  <SEO
+    slot="head"
+    locale={locale}
+    pathWithoutLocale={`/projects/${project.id}`}
+    title={`${title} · ${ui.caseStudy.titleSuffix}`}
+    description={seoDescription}
+    type="article"
+    publishDate={publishDate}
+    section={ui.caseStudy.sectionCases}
+    tags={techStack}
+    imageAlt={`${title} · ${siteConfig.author.name}`}
+  />
+
+  <StructuredData
+    locale={locale}
+    type="Article"
+    data={{
+      title,
+      description: seoDescription,
+      publishDate,
+      image: caseImageUrl,
+      url: pageUrl,
+      tags: techStack,
+      section: ui.caseStudy.sectionCases,
+    }}
+  />
+
+  <StructuredData
+    locale={locale}
+    type="Project"
+    data={{
+      title,
+      outcomeSummary,
+      problem,
+      impact: impact.qualitative,
+      techStack,
+      year,
+      url: pageUrl,
+      image: caseImageUrl,
+    }}
+  />
+
+  <StructuredData
+    locale={locale}
+    type="BreadcrumbList"
+    data={{
+      items: [
+        { name: ui.pages.projects.breadcrumbHome, url: withLocale(locale, "/") },
+        { name: ui.pages.projects.breadcrumbCases, url: projectsPath },
+        { name: title, url: withLocale(locale, `/projects/${project.id}`) },
+      ],
+    }}
+  />
+
+  <ReaderFeed
+    items={readerItems}
+    currentSlug={project.id}
+    indexHref={projectsPath}
+    indexLabel={ui.reader.backCases}
+    continueLabel={ui.reader.continueCase}
+    nextLabel={ui.reader.nextCase}
+    positionTemplate={ui.reader.position}
+  >
+  <div
+    class="case-study"
+    data-reader-article
+    data-reader-slug={project.id}
+    data-reader-title={title}
+    data-reader-url={withLocale(locale, `/projects/${project.id}`)}
+  >
+    <p class="case-back" data-reader-exclude>
+      <BackLink href={projectsPath} text={ui.caseStudy.allCases} />
+    </p>
+
+    <header class="case-study-header">
+      {
+        (isMeta === true || (status && status !== "completed")) && (
+          <p class="case-kicker meta-line">
+            {isMeta === true && <span>{ui.caseStudy.featured}</span>}
+            {isMeta === true && status && status !== "completed" && (
+              <span class="meta-line__sep" aria-hidden="true"> · </span>
+            )}
+            {status && status !== "completed" && <span>{statusInfo.label}</span>}
+          </p>
+        )
+      }
+      <h1>{title}</h1>
+      <div class="case-study-meta">
+        <span class="meta-item">{role}</span>
+        <span class="meta-separator">·</span>
+        <span class="meta-item">{year}</span>
+        {
+          duration && (
+            <>
+              <span class="meta-separator">·</span>
+              <span class="meta-item">{duration}</span>
+            </>
+          )
+        }
+        {
+          teamSize && (
+            <>
+              <span class="meta-separator">·</span>
+              <span class="meta-item">
+                {teamSize}{" "}
+                {teamSize === 1 ? ui.caseStudy.person : ui.caseStudy.people}
+              </span>
+            </>
+          )
+        }
+        <span class="meta-separator">·</span>
+        <span class="meta-item">{readingTime}</span>
+      </div>
+      <p class="outcome-summary">{outcomeSummary}</p>
+      {
+        caseCover && (
+          <figure class="case-masthead">
+            <Image
+              src={caseCover}
+              alt={
+                locale === "pt-BR"
+                  ? `Interface do produto: ${title}`
+                  : `${title} product interface`
+              }
+              widths={[480, 720, 960, 1200]}
+              sizes="(max-width: 768px) 92vw, min(52rem, 88vw)"
+              loading="eager"
+              decoding="async"
+              class="case-masthead__img"
+            />
+          </figure>
+        )
+      }
+      {
+        rejectedPull && (
+          <blockquote class="pull-quote">
+            {ui.caseStudy.rejected}: {rejectedPull}
+          </blockquote>
+        )
+      }
+    </header>
+
+    <nav class="case-jump" aria-label={ui.caseStudy.jumpAria}>
+      <a href="#overview">{ui.caseStudy.overview}</a>
+      <span class="case-jump-sep" aria-hidden="true">·</span>
+      <a href="#decisions">{ui.caseStudy.decisions}</a>
+      <span class="case-jump-sep" aria-hidden="true">·</span>
+      <a href="#impact">{ui.caseStudy.impact}</a>
+    </nav>
+
+    <section class="case-study-section" id="overview">
+      <h2>{ui.caseStudy.overview}</h2>
+      <p>{overview}</p>
+    </section>
+
+    <section class="case-study-section">
+      <h2>{ui.caseStudy.problem}</h2>
+      <p>{problem}</p>
+    </section>
+
+    <section class="case-study-section">
+      <h2>{ui.caseStudy.constraints}</h2>
+      <ul class="constraints-list">
+        {constraints.map((constraint) => <li>{constraint}</li>)}
+      </ul>
+    </section>
+
+    <section class="case-study-section">
+      <h2>{ui.caseStudy.architecture}</h2>
+      <p>{approach}</p>
+    </section>
+
+    <section class="case-study-section" id="decisions">
+      <h2>{ui.caseStudy.keyDecisions}</h2>
+      <div class="decisions-list">
+        {
+          keyDecisions.map((decision) => (
+            <div class="decision-item">
+              <h3 class="decision-title">{decision.decision}</h3>
+              <div class="decision-reasoning">
+                <strong>{ui.caseStudy.reasoning}</strong>
+                <p>{decision.reasoning}</p>
+              </div>
+              {decision.alternatives && decision.alternatives.length > 0 && (
+                <div class="decision-alternatives">
+                  <strong>{ui.caseStudy.alternatives}</strong>
+                  <ul>
+                    {decision.alternatives.map((alt) => (
+                      <li>{alt}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    <section class="case-study-section">
+      <h2>{ui.caseStudy.techStack}</h2>
+      <ul class="tech-stack-list">
+        {techStack.map((tech) => <li>{tech}</li>)}
+      </ul>
+    </section>
+
+    <section class="case-study-section case-study-section--impact" id="impact">
+      <h2>{ui.caseStudy.impact}</h2>
+
+      {
+        impact.metrics && impact.metrics.length > 0 && (
+          <MetricVisualization
+            metrics={impact.metrics}
+            auditSource={impact.auditSource}
+            auditDate={impact.auditDate}
+            verificationLabel={ui.metrics.verification}
+            auditDateLabel={ui.metrics.auditDate}
+            ratingGood={ui.metrics.ratingGood}
+            ratingNeedsImprovement={ui.metrics.ratingNeedsImprovement}
+            ratingPoor={ui.metrics.ratingPoor}
+            scoreOutOf={ui.metrics.scoreOutOf}
+          />
+        )
+      }
+
+      <p class="impact-qualitative">{impact.qualitative}</p>
+    </section>
+
+    <section class="case-study-section">
+      <h2>{ui.caseStudy.learnings}</h2>
+      <ul class="learnings-list">
+        {learnings.map((learning) => <li>{learning}</li>)}
+      </ul>
+    </section>
+
+    {
+      project.id === "stackbrief" && (
+        <section class="case-study-content">
+          <StackbriefBody locale={locale} />
+        </section>
+      )
+    }
+    {
+      project.id === "diario-fit" && (
+        <section class="case-study-content">
+          <DiarioFitBody locale={locale} />
+        </section>
+      )
+    }
+    {
+      !hasLocalizedBody &&
+        Content &&
+        project.body &&
+        project.body.trim().length > 0 && (
+          <section class="case-study-content">
+            <Content />
+          </section>
+        )
+    }
+
+    <div data-reader-exclude>
+      <RelatedContent
+        locale={locale}
+        relatedProjects={relatedProjects}
+        title={ui.related.heading}
+        sectionTitle={ui.related.caseStudies}
+      />
+    </div>
+
+    <p class="case-back case-back--footer" data-reader-exclude>
+      <BackLink href={projectsPath} text={ui.caseStudy.allCases} />
+    </p>
+  </div>
+  </ReaderFeed>
+
+  <ScrollToTop label={ui.scrollTop} />
+
+  <style>
+    .case-study {
+      --case-jump-height: 3.25rem;
+      /* One column for masthead, quote, jump, and body — same left edge. */
+      --case-prose-width: min(100%, 52rem);
+      max-width: var(--max-width-case);
+      margin: 0 auto;
+      padding: 2rem var(--pad-case-inline) 2rem;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .case-back {
+      margin: 0 auto 1.25rem;
+      max-width: var(--case-prose-width);
+    }
+
+    .case-back--footer {
+      margin-top: 2rem;
+      margin-bottom: 0;
+    }
+
+    .case-study :global(.related-content) {
+      margin-inline: auto;
+      max-width: var(--case-prose-width);
+    }
+
+    .case-study-header {
+      margin: 0 auto 1.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--color-border);
+      max-width: var(--case-prose-width);
+    }
+
+    .case-kicker {
+      margin: 0 0 0.75rem;
+    }
+
+    .case-study-header .case-masthead {
+      max-width: none;
+      width: 100%;
+      margin-left: 0;
+      margin-right: 0;
+      box-sizing: border-box;
+    }
+
+    .case-study-header h1 {
+      font-family: var(--font-display);
+      font-size: clamp(1.85rem, 4vw, 2.65rem);
+      margin-bottom: 1rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.12;
+      max-width: none;
+    }
+
+    .case-study-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem 0.75rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.02em;
+      color: var(--color-text-muted);
+      margin-bottom: 1.5rem;
+    }
+
+    .meta-separator {
+      opacity: 0.5;
+    }
+
+    .outcome-summary {
+      font-size: 1.25rem;
+      line-height: 1.6;
+      color: var(--color-text-secondary);
+      font-weight: 500;
+      max-width: none;
+    }
+
+    .case-masthead {
+      margin: 1.5rem 0 0;
+      padding: 0;
+      border: 1px solid var(--color-border);
+      background: var(--color-bg-secondary);
+      overflow: hidden;
+      max-width: none;
+    }
+
+    .case-masthead__img {
+      width: 100%;
+      display: block;
+      aspect-ratio: 16 / 10;
+      object-fit: cover;
+      object-position: top center;
+    }
+
+    .case-study-header :global(.pull-quote) {
+      max-width: none;
+      width: 100%;
+    }
+
+    .case-jump {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem 0.65rem;
+      margin: 0 0 1.5rem;
+      margin-left: calc(-1 * var(--pad-case-inline));
+      margin-right: calc(-1 * var(--pad-case-inline));
+      padding: calc(0.35rem + 3px) var(--pad-case-inline) calc(0.2rem - 2px);
+      min-height: var(--case-jump-height);
+      box-sizing: border-box;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      position: sticky;
+      top: calc(var(--site-header-height) + 3px);
+      z-index: 90;
+      background: var(--color-bg);
+      border-bottom: 1px solid var(--color-border-subtle);
+    }
+
+    .case-jump a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(var(--case-jump-height) - 0.55rem);
+      padding: 0.35rem 0.15rem 0.2rem;
+      box-sizing: border-box;
+      line-height: 1;
+      color: var(--color-accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .case-jump a[aria-current="true"] {
+      color: var(--color-text);
+      text-decoration: underline;
+      text-underline-offset: 0.28em;
+      text-decoration-thickness: 1.5px;
+    }
+
+    .case-jump a:hover,
+    .case-jump a:focus-visible {
+      text-decoration: underline;
+      text-underline-offset: 0.28em;
+    }
+
+    .case-jump a:focus-visible {
+      outline: var(--focus-ring-width) solid var(--focus-ring-color);
+      outline-offset: var(--focus-ring-offset);
+    }
+
+    .case-jump-sep {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(var(--case-jump-height) - 0.55rem);
+      padding: 0.35rem 0 0.2rem;
+      box-sizing: border-box;
+      line-height: 1;
+      color: var(--color-text-muted);
+      opacity: 0.6;
+    }
+
+    @media (max-width: 768px) {
+      .case-study {
+        --case-jump-height: 2.75rem;
+      }
+
+      .case-jump {
+        position: static;
+        top: auto;
+        padding: 0 var(--pad-case-inline);
+      }
+
+      .case-jump a,
+      .case-jump-sep {
+        min-height: var(--case-jump-height);
+        padding-top: 0.2rem;
+        padding-bottom: 0.05rem;
+      }
+
+      .case-back {
+        display: none;
+      }
+
+      .case-study-section {
+        scroll-margin-top: calc(var(--site-header-height) + 4.75rem);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .case-study {
+        --case-jump-height: 3rem;
+      }
+
+      .case-jump a,
+      .case-jump-sep {
+        /* Uppercase mono sits high in the em-box; nudge optical center down. */
+        padding-top: 0.35rem;
+        padding-bottom: 0.1rem;
+      }
+    }
+
+    .case-study-section {
+      margin: 0 auto 2.5rem;
+      max-width: var(--case-prose-width);
+      scroll-margin-top: calc(
+        var(--site-header-height) + var(--case-jump-height) + 3px + 0.5rem
+      );
+    }
+
+    .case-study-section h2,
+    .case-study-content :global(h2) {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      margin-top: 3rem;
+      margin-bottom: 1rem;
+      margin-inline: auto;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+      line-height: 1.3;
+      max-width: var(--case-prose-width);
+    }
+
+    .case-study-section:first-of-type h2 {
+      margin-top: 0;
+    }
+
+    .case-study-content :global(h2:first-of-type) {
+      margin-top: 0;
+    }
+
+    .case-study-content :global(h3) {
+      font-size: 1.375rem;
+      margin-top: 3rem;
+      margin-bottom: 1.25rem;
+      margin-inline: auto;
+      font-weight: 600;
+      color: var(--color-text);
+      line-height: 1.3;
+      max-width: var(--case-prose-width);
+    }
+
+    .case-study-section p,
+    .case-study-content :global(p) {
+      font-size: 1.1875rem;
+      line-height: 1.7;
+      color: var(--color-text-secondary);
+      margin-bottom: 1.25rem;
+      margin-inline: auto;
+      max-width: var(--case-prose-width);
+    }
+
+    .constraints-list li,
+    .tech-stack-list li,
+    .learnings-list li,
+    .case-study-content :global(li) {
+      font-size: 1.1875rem;
+      line-height: 1.7;
+      color: var(--color-text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .case-study-section p:last-child {
+      margin-bottom: 0;
+    }
+
+    .constraints-list,
+    .tech-stack-list,
+    .learnings-list {
+      list-style: disc;
+      padding-left: 1.5rem;
+      margin-bottom: 2rem;
+      margin-inline: auto;
+      max-width: var(--case-prose-width);
+    }
+
+    .constraints-list li,
+    .tech-stack-list li,
+    .learnings-list li {
+      padding: 0;
+      position: relative;
+    }
+
+    .constraints-list li::marker,
+    .tech-stack-list li::marker,
+    .learnings-list li::marker {
+      color: var(--color-text-muted);
+    }
+
+    .decisions-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      margin-inline: auto;
+      max-width: var(--case-prose-width);
+    }
+
+    .decision-item {
+      padding: 1.25rem 0 1.5rem;
+      border: none;
+      border-bottom: 1px solid var(--color-border-subtle);
+      border-radius: 0;
+      background: transparent;
+    }
+
+    .decision-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .decision-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--color-text);
+      letter-spacing: -0.02em;
+    }
+
+    .decision-reasoning,
+    .decision-alternatives {
+      margin-top: 1rem;
+    }
+
+    .decision-reasoning strong,
+    .decision-alternatives strong {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      color: var(--color-text-muted);
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .decision-reasoning p {
+      font-size: 1.0625rem;
+      margin-top: 0.5rem;
+      color: var(--color-text-secondary);
+    }
+
+    .decision-alternatives ul {
+      list-style: none;
+      padding: 0;
+      margin-top: 0.5rem;
+    }
+
+    .decision-alternatives li {
+      font-size: 1.0625rem;
+      line-height: 1.6;
+      padding: 0.25rem 0;
+      padding-left: 1.25rem;
+      position: relative;
+      color: var(--color-text-secondary);
+    }
+
+    .decision-alternatives li::before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: var(--color-text-muted);
+      opacity: 0.7;
+    }
+
+    .impact-qualitative {
+      font-size: 1.125rem;
+      line-height: 1.7;
+      color: var(--color-text-secondary);
+      margin-inline: auto;
+      max-width: var(--case-prose-width);
+    }
+
+    .case-study-content {
+      margin-top: 2.5rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--color-border);
+      max-width: none;
+    }
+
+    .case-study-content :global(figure.case-study-shot) {
+      /* Same measure as headings and body copy. */
+      margin: 1.75rem auto 2.75rem;
+      max-width: var(--case-prose-width);
+      text-align: left;
+    }
+
+    .case-study-content :global(figure.case-study-shot--pair) {
+      max-width: var(--case-prose-width);
+    }
+
+    .case-study-content :global(figure.case-study-shot--phone) {
+      max-width: min(100%, 17rem);
+    }
+
+    .case-study-content :global(figure.case-study-shot--phone.case-study-shot--pair) {
+      max-width: var(--case-prose-width);
+    }
+
+    .case-study-content :global(figure.case-study-shot .case-study-shot__pair) {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      align-items: start;
+    }
+
+    .case-study-content :global(figure.case-study-shot .case-study-shot__img),
+    .case-study-content :global(figure.case-study-shot img) {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+      margin: 0;
+      border-radius: var(--border-radius-sm);
+      border: 1px solid var(--color-border);
+    }
+
+    .case-study-content :global(figure.case-study-shot figcaption) {
+      margin-top: 0.85rem;
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      color: var(--color-text-muted);
+      font-style: normal;
+      text-align: left;
+      max-width: var(--case-prose-width);
+      margin-inline: auto;
+    }
+
+    .case-study-content :global(figure.case-study-shot--pair figcaption) {
+      max-width: var(--case-prose-width);
+    }
+
+    .case-study-content :global(figure.case-study-shot--phone figcaption) {
+      max-width: 17rem;
+    }
+
+    .case-study-content :global(figure.case-study-shot--phone.case-study-shot--pair figcaption) {
+      max-width: min(100%, 32rem);
+    }
+
+    @media (max-width: 640px) {
+      .case-study-content :global(h3) {
+        margin-top: 2.75rem;
+        margin-bottom: 0;
+      }
+
+      .case-study-content :global(figure.case-study-shot) {
+        margin: 0 0 3.5rem;
+        padding-top: 1.15rem;
+        max-width: 100%;
+      }
+
+      .case-study-content :global(figure.case-study-shot--phone) {
+        /* Tall phone shots read better centered on small screens. */
+        max-width: min(100%, 18.5rem);
+        margin-left: auto;
+        margin-right: auto;
+        margin-bottom: 4rem;
+      }
+
+      .case-study-content :global(figure.case-study-shot--phone.case-study-shot--pair) {
+        max-width: 100%;
+        margin-left: 0;
+        margin-right: 0;
+      }
+
+      .case-study-content :global(figure.case-study-shot .case-study-shot__pair) {
+        grid-template-columns: 1fr;
+        gap: 1.75rem;
+      }
+
+      .case-study-content :global(figure.case-study-shot--phone .case-study-shot__pair) {
+        gap: 2.25rem;
+      }
+
+      .case-study-content :global(figure.case-study-shot figcaption) {
+        margin-top: 0.85rem;
+        max-width: 100%;
+        padding: 0 0.15rem;
+        text-align: left;
+      }
+
+      .case-study-content :global(figure.case-study-shot--phone figcaption),
+      .case-study-content :global(figure.case-study-shot--phone.case-study-shot--pair figcaption) {
+        max-width: 100%;
+        margin-top: 1rem;
+      }
+    }
+
+    .case-study-content :global(ul) {
+      list-style: disc;
+      padding-left: 1.5rem;
+      margin-bottom: 2rem;
+      margin-inline: auto;
+      max-width: var(--case-prose-width);
+    }
+
+    .case-study-content :global(ol) {
+      list-style: decimal;
+      padding-left: 1.5rem;
+      margin-bottom: 2rem;
+      margin-inline: auto;
+      max-width: var(--case-prose-width);
+    }
+
+    .case-study-content :global(li) {
+      padding: 0.25rem 0;
+      margin-bottom: 0.75rem;
+    }
+
+    .case-study-content :global(ul li::marker) {
+      color: var(--color-text-muted);
+    }
+
+    .case-study-content :global(ol li::marker) {
+      color: var(--color-text-muted);
+      font-weight: 600;
+    }
+
+    @media (max-width: 768px) {
+      .case-study {
+        padding: 1.5rem 1rem;
+      }
+
+      .case-study-header h1 {
+        font-size: 2rem;
+      }
+
+      .outcome-summary {
+        font-size: 1.125rem;
+      }
+
+      .case-study-section p {
+        font-size: 1rem;
+      }
+
+      .decision-item {
+        padding: 1.25rem 0 1.5rem;
+      }
+
+      .case-study-content {
+        margin-top: 3.5rem;
+        padding-top: 2.75rem;
+      }
+
+      .case-study-content :global(h2) {
+        margin-top: 2.5rem;
+        margin-bottom: 1.15rem;
+      }
+
+      .case-study-content :global(h2:first-of-type) {
+        margin-top: 0;
+      }
+
+      .case-study-content :global(p) {
+        font-size: 1.0625rem;
+        margin-bottom: 1.5rem;
+      }
+    }
+  </style>
+
+  <script is:inline>
+    (function () {
+      function initCaseJump() {
+        var nav = document.querySelector(".case-jump");
+        if (!nav) return;
+
+        var sections = [];
+        var anchors = nav.querySelectorAll("a[href^='#']");
+        for (var i = 0; i < anchors.length; i++) {
+          var link = anchors[i];
+          var href = link.getAttribute("href") || "";
+          var id = href.slice(1);
+          var el = id ? document.getElementById(id) : null;
+          if (el) sections.push({ link: link, el: el });
+        }
+        if (!sections.length) return;
+
+        function setCurrent(active) {
+          for (var j = 0; j < sections.length; j++) {
+            var item = sections[j];
+            if (active && item.link === active) {
+              item.link.setAttribute("aria-current", "true");
+            } else {
+              item.link.removeAttribute("aria-current");
+            }
+          }
+        }
+
+        var observer = new IntersectionObserver(
+          function (entries) {
+            var visible = entries
+              .filter(function (e) {
+                return e.isIntersecting;
+              })
+              .sort(function (a, b) {
+                return a.target.offsetTop - b.target.offsetTop;
+              });
+            if (visible[0]) {
+              for (var k = 0; k < sections.length; k++) {
+                if (sections[k].el === visible[0].target) {
+                  setCurrent(sections[k].link);
+                  break;
+                }
+              }
+            }
+          },
+          {
+            rootMargin: "-20% 0px -55% 0px",
+            threshold: [0, 0.25, 0.5],
+          },
+        );
+
+        for (var n = 0; n < sections.length; n++) {
+          observer.observe(sections[n].el);
+        }
+      }
+
+      initCaseJump();
+      document.addEventListener("astro:after-swap", initCaseJump);
+    })();
+  </script>
+</BaseLayout>

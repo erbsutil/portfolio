@@ -1,0 +1,108 @@
+---
+/**
+ * Locale switcher: EN | PT-BR. Sets sticky cookie and navigates.
+ */
+import type { AppLocale } from "../i18n/config";
+import {
+  LOCALE_COOKIE,
+  LOCALE_COOKIE_MAX_AGE,
+  localeLabels,
+  locales,
+  switchLocalePath,
+} from "../i18n/config";
+import { getUi } from "../i18n/ui";
+
+interface Props {
+  locale: AppLocale;
+}
+
+const { locale } = Astro.props;
+const pathname = Astro.url.pathname;
+const ui = getUi(locale);
+const switchLabels: Record<AppLocale, string> = {
+  en: ui.switchToEn,
+  "pt-BR": ui.switchToPt,
+};
+---
+
+<div class="locale-switch" role="group" aria-label={ui.language}>
+  {
+    locales.map((code) => {
+      const href = switchLocalePath(pathname, code);
+      const active = code === locale;
+      return (
+        <a
+          href={href}
+          class:list={["locale-switch__link", { "locale-switch__link--active": active }]}
+          hreflang={code}
+          lang={code}
+          aria-current={active ? "true" : undefined}
+          aria-label={`${localeLabels[code]}, ${switchLabels[code]}`}
+          data-locale-switch={code}
+          data-locale-href={href}
+        >
+          <span aria-hidden="true">{localeLabels[code]}</span>
+        </a>
+      );
+    })
+  }
+</div>
+
+<script is:inline define:vars={{ cookieName: LOCALE_COOKIE, maxAge: LOCALE_COOKIE_MAX_AGE }}>
+  document.querySelectorAll("[data-locale-switch]").forEach((el) => {
+    el.addEventListener("click", (event) => {
+      const target = event.currentTarget;
+      if (!(target instanceof HTMLElement)) return;
+      const next = target.getAttribute("data-locale-switch");
+      if (!next) return;
+      document.cookie =
+        cookieName +
+        "=" +
+        encodeURIComponent(next) +
+        "; Path=/; Max-Age=" +
+        maxAge +
+        "; SameSite=Lax";
+    });
+  });
+</script>
+
+<style>
+  .locale-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .locale-switch__link {
+    color: var(--color-text-muted);
+    text-decoration: none;
+    line-height: 1;
+    padding: 0.55rem 0.55rem;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .locale-switch__link:hover,
+  .locale-switch__link:focus-visible {
+    color: var(--color-text);
+  }
+
+  .locale-switch__link--active {
+    color: var(--color-text);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+
+  .locale-switch__link:focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
+  }
+</style>

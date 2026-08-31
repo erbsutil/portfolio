@@ -1,0 +1,802 @@
+---
+/**
+ * Home — work-first narrative, editorial paper composition.
+ * Route: /[locale]/
+ *
+ * Selected work: one visual lead (real cover when available) + secondary
+ * typographic rail. No carousel. Products stay AppCards (protected).
+ */
+
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SEO from "../../components/SEO.astro";
+import StructuredData from "../../components/StructuredData.astro";
+import ForwardLink from "../../components/ForwardLink.astro";
+import AppCard from "../../components/AppCard.astro";
+import CaseLead from "../../components/CaseLead.astro";
+
+import { getCollection } from "astro:content";
+import { Image } from "astro:assets";
+import { siteConfig } from "../../config";
+import { withLocale } from "../../i18n/config";
+import { localeFromParams, localeStaticPaths } from "../../i18n/utils";
+import { getUi } from "../../i18n/ui";
+import {
+  localizeAppData,
+  localizeProjectData,
+  localizeSpeaking,
+} from "../../i18n/content/localize";
+import { getCaseCover } from "../../lib/caseCovers";
+import heroCommunityFace from "../../assets/images/speaking/devparana-estrada-26-face.jpg";
+
+export function getStaticPaths() {
+  return localeStaticPaths();
+}
+
+const locale = localeFromParams(Astro.params.locale);
+const ui = getUi(locale);
+
+const allProjects = await getCollection("projects");
+const featuredProjects = allProjects
+  .filter((project) => project.data.featured === true)
+  .sort((a, b) => (a.data.order || 999) - (b.data.order || 999))
+  .map((p) => ({
+    ...p,
+    data: localizeProjectData(p.id, p.data as Record<string, unknown>, locale) as typeof p.data,
+  }));
+
+const leadProject =
+  featuredProjects.find((p) => getCaseCover(p.id)) ?? featuredProjects[0];
+const secondaryProjects = featuredProjects
+  .filter((p) => p.id !== leadProject?.id)
+  .slice(0, 2);
+const leadCover = leadProject ? getCaseCover(leadProject.id) : undefined;
+
+const allApps = await getCollection("apps");
+const shippingApps = [...allApps]
+  .sort((a, b) => (a.data.order ?? 999) - (b.data.order ?? 999))
+  .map((a) => ({
+    ...a,
+    data: localizeAppData(a.id, a.data as Record<string, unknown>, locale) as typeof a.data,
+  }));
+
+const allTalks = await getCollection("speaking");
+const talksSorted = [...allTalks]
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+  .map((t) => ({
+    ...t,
+    data: localizeSpeaking(t.id, t.data as Record<string, unknown>, locale)
+      .data as typeof t.data,
+  }));
+/** Hero teaser — newest talk with a photo */
+const latestTalk = talksSorted.find((t) => t.data.image) ?? null;
+/** Bottom community lead — next distinct photo so the home isn’t the same event twice */
+const communityLeadTalk =
+  talksSorted.find((t) => t.data.image && t.id !== latestTalk?.id) ?? null;
+
+const homeBlurbs = ui.home.blurbs as Record<string, string>;
+const authorTitle = ui.site.authorTitle;
+
+const trialPricing = /free trial|teste gratuito/i;
+const productCta = (pricing?: string) =>
+  trialPricing.test(pricing ?? "") ? ui.home.tryFree : ui.cards.openApp;
+---
+
+<BaseLayout locale={locale}>
+  <SEO
+    slot="head"
+    locale={locale}
+    pathWithoutLocale="/"
+    title={`${siteConfig.author.name}, ${authorTitle}`}
+    description={ui.site.description}
+    type="website"
+    noSuffix
+    imageAlt={`${siteConfig.author.name}, ${authorTitle}`}
+  />
+
+  <StructuredData
+    type="WebSite"
+    locale={locale}
+    data={{ name: ui.site.title, description: ui.site.description }}
+  />
+  <StructuredData
+    type="ProfilePage"
+    locale={locale}
+    data={{
+      name: siteConfig.author.name,
+      jobTitle: authorTitle,
+      description: ui.site.authorBio,
+      url: new URL(withLocale(locale, "/"), siteConfig.url).href,
+    }}
+  />
+
+  <div class="home-page">
+    <section class="hero">
+      <div class="hero-grid">
+        <div class="hero-left">
+          <p class="hero-role">
+            {ui.home.roleAt}
+          </p>
+          <h1 class="hero-title">
+            {ui.home.heroTitle}
+          </h1>
+          <p class="hero-sub">
+            {ui.home.heroSub}
+          </p>
+          <div class="hero-cta">
+            <ForwardLink href={withLocale(locale, "/projects")} text={ui.home.viewCases} />
+            <ForwardLink
+              href="/Erick_Sutil_Resume.pdf"
+              text={ui.home.resume}
+              variant="muted"
+              target="_blank"
+              rel="noopener noreferrer"
+            />
+          </div>
+          {
+            latestTalk?.data.image && (
+              <a
+                class="hero-community"
+                href={withLocale(locale, `/community/${latestTalk.id}`)}
+                aria-label={`${ui.home.communityHeading}: ${latestTalk.data.title}`}
+              >
+                <span class="hero-community__kicker">{ui.home.communityHeading}</span>
+                <span class="hero-community__media">
+                  <Image
+                    src={
+                      latestTalk.id === "devparana-astro-ai-responsibility"
+                        ? heroCommunityFace
+                        : latestTalk.data.image
+                    }
+                    alt=""
+                    widths={[208, 280, 360]}
+                    sizes="8.75rem"
+                    loading="lazy"
+                    decoding="async"
+                    class="hero-community__img"
+                  />
+                </span>
+                <span class="hero-community__body">
+                  <span class="hero-community__event">{latestTalk.data.event}</span>
+                  <span class="hero-community__title">{latestTalk.data.title}</span>
+                </span>
+              </a>
+            )
+          }
+        </div>
+
+        <aside class="hero-right" aria-label={ui.home.selectedWork}>
+          <p class="rail-label">{ui.home.selectedWork}</p>
+          {
+            leadProject && (
+              <div class="hero-lead">
+                <CaseLead
+                  title={leadProject.data.title}
+                  href={withLocale(locale, `/projects/${leadProject.id}`)}
+                  summary={leadProject.data.outcomeSummary}
+                  year={leadProject.data.year}
+                  cover={leadCover}
+                  viewLabel={ui.cards.viewCase}
+                  featuredLabel={ui.caseStudy.featured}
+                  featured={leadProject.data.isMeta === true}
+                  size="home"
+                />
+              </div>
+            )
+          }
+          {
+            secondaryProjects.length > 0 && (
+              <ul class="hero-rail">
+                {secondaryProjects.map((p, i) => (
+                  <li style={`--i: ${i}`}>
+                    <a
+                      href={withLocale(locale, `/projects/${p.id}`)}
+                      class="hero-rail-item"
+                    >
+                      <span class="hero-rail-meta">{p.data.year}</span>
+                      <span class="hero-rail-title">{p.data.title}</span>
+                      <span class="hero-rail-summary">{p.data.outcomeSummary}</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )
+          }
+          <ForwardLink href={withLocale(locale, "/projects")} text={ui.home.allCases} variant="muted" />
+        </aside>
+      </div>
+    </section>
+
+    {
+      shippingApps.length > 0 && (
+        <section class="also-shipping" aria-labelledby="shipping-heading">
+          <h2 id="shipping-heading">{ui.home.products}</h2>
+          <div class="home-product-grid">
+            {shippingApps.slice(0, 3).map((app) => (
+              <AppCard
+                title={app.data.title}
+                tagline={homeBlurbs[app.id] ?? app.data.tagline}
+                description={app.data.description}
+                icon={app.data.icon}
+                status={app.data.status}
+                pricing={app.data.pricing}
+                url={app.data.url}
+                ctaLabel={productCta(app.data.pricing)}
+                opensNewTabLabel={ui.opensNewTab}
+                statusLabels={{
+                  live: ui.cards.statusLive,
+                  beta: ui.cards.statusBeta,
+                  "coming-soon": ui.cards.statusComingSoon,
+                  archived: ui.cards.statusArchived,
+                }}
+                compact
+              />
+            ))}
+          </div>
+          <ForwardLink href={withLocale(locale, "/products")} text={ui.home.seeProducts} variant="muted" />
+        </section>
+      )
+    }
+
+    <section class="community" aria-labelledby="community-heading">
+      <div class="community-copy">
+        <h2 id="community-heading">{ui.home.communityHeading}</h2>
+        <p class="community-intro">
+          {ui.home.communityBody}
+        </p>
+        <ForwardLink href={withLocale(locale, "/community")} text={ui.home.communityCta} variant="muted" />
+      </div>
+      {
+        communityLeadTalk?.data.image && (
+          <a
+            class="community-lead"
+            href={withLocale(locale, `/community/${communityLeadTalk.id}`)}
+          >
+            <span class="community-lead__media">
+              <Image
+                src={communityLeadTalk.data.image}
+                alt=""
+                widths={[320, 480, 640, 800]}
+                sizes="(max-width: 899px) 7.5rem, min(28rem, 42vw)"
+                loading="lazy"
+                decoding="async"
+                class="community-lead__img"
+              />
+            </span>
+            <span class="community-lead__body">
+              <span class="community-lead__event">{communityLeadTalk.data.event}</span>
+              <span class="community-lead__title">{communityLeadTalk.data.title}</span>
+            </span>
+          </a>
+        )
+      }
+    </section>
+  </div>
+
+  <style>
+    .home-page {
+      max-width: var(--max-width-content);
+      margin: 0 auto;
+      padding: 0 var(--pad-page-inline) 4.5rem;
+    }
+
+    .hero {
+      padding: 2.75rem 0 3rem;
+      margin-bottom: 0;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 2.5rem 2.75rem;
+      align-items: stretch;
+    }
+
+    .hero-left {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .hero-role {
+      font-size: 0.975rem;
+      font-weight: 500;
+      color: var(--color-text-secondary);
+      margin: 0 0 0.85rem;
+      animation: ink-in 0.7s var(--ease-print) both;
+    }
+
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(1.75rem, 3.6vw, 2.35rem);
+      line-height: 1.15;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin: 0 0 1.15rem;
+      color: var(--color-text);
+      max-width: 34rem;
+      text-wrap: balance;
+      animation: ink-in 0.7s var(--ease-print) 0.06s both;
+    }
+
+    .hero-sub {
+      font-size: 1.0625rem;
+      color: var(--color-text-secondary);
+      margin-bottom: 1.5rem;
+      line-height: 1.65;
+      max-width: 34rem;
+      animation: ink-in 0.7s var(--ease-print) 0.12s both;
+    }
+
+    .hero-cta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.85rem 1.35rem;
+      animation: ink-in 0.7s var(--ease-print) 0.18s both;
+    }
+
+    /* Desktop-only teaser — face-forward speaking photo anchors the left column */
+    .hero-community {
+      display: none;
+    }
+
+    @media (min-width: 769px) {
+      .hero-community {
+        display: grid;
+        grid-template-columns: 8.75rem minmax(0, 1fr);
+        grid-template-areas:
+          "kicker kicker"
+          "media body";
+        column-gap: 1rem;
+        row-gap: 0.5rem;
+        align-items: center;
+        margin-top: 1.5rem;
+        padding-top: 1.15rem;
+        max-width: 32rem;
+        text-decoration: none;
+        color: inherit;
+        animation: ink-in 0.7s var(--ease-print) 0.28s both;
+      }
+
+      .hero-community:focus-visible {
+        outline: var(--focus-ring-width) solid var(--focus-ring-color);
+        outline-offset: var(--focus-ring-offset);
+      }
+
+      .hero-community__kicker {
+        grid-area: kicker;
+        display: block;
+        font-family: var(--font-mono);
+        font-size: 0.5625rem;
+        font-weight: 500;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--color-text-muted);
+        padding-bottom: 0.4rem;
+        margin-bottom: 0.05rem;
+        border-bottom: 1px solid var(--color-border);
+      }
+
+      .hero-community__media {
+        grid-area: media;
+        display: block;
+        aspect-ratio: 1;
+        border: 1px solid var(--color-border);
+        background: var(--color-bg-secondary);
+        overflow: hidden;
+        line-height: 0;
+      }
+
+      .hero-community__img {
+        width: 100%;
+        height: 100%;
+        aspect-ratio: 1;
+        object-fit: cover;
+        object-position: center;
+        display: block;
+      }
+
+      .hero-community__body {
+        grid-area: body;
+        min-width: 0;
+      }
+
+      .hero-community__event {
+        display: block;
+        font-family: var(--font-mono);
+        font-size: 0.625rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--color-text-secondary);
+        margin-bottom: 0.25rem;
+      }
+
+      .hero-community__title {
+        display: block;
+        font-family: var(--font-display);
+        font-size: 1.05rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        line-height: 1.3;
+        color: var(--color-text);
+        text-wrap: balance;
+      }
+
+      .hero-community:hover .hero-community__title,
+      .hero-community:focus-visible .hero-community__title {
+        text-decoration: underline;
+        text-underline-offset: 0.18em;
+        text-decoration-thickness: 1.5px;
+        text-decoration-color: color-mix(in srgb, var(--color-text) 70%, transparent);
+      }
+    }
+
+    .hero-right {
+      position: relative;
+      padding-left: 1.5rem;
+      border-left: 1px solid var(--color-border);
+      animation: ink-in 0.75s var(--ease-print) 0.16s both;
+    }
+
+    .rail-label {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+      margin: 0 0 0.95rem;
+    }
+
+    .hero-lead {
+      margin: 0 0 0.85rem;
+      padding-bottom: 0.85rem;
+      border-bottom: 1px solid var(--color-border-subtle);
+    }
+
+    .hero-lead :global(.case-lead--home .case-lead__img) {
+      max-height: 9.5rem;
+    }
+
+    .hero-lead :global(.case-lead__kicker) {
+      margin-bottom: 0.15rem;
+    }
+
+    .hero-lead :global(.case-lead__title) {
+      margin-top: 0;
+    }
+
+    .hero-lead :global(.case-lead__summary) {
+      -webkit-line-clamp: 2;
+      font-size: 0.875rem;
+    }
+
+    .hero-rail {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .hero-rail li {
+      animation: ink-in 0.55s var(--ease-print) both;
+      animation-delay: calc(0.22s + var(--i, 0) * 0.05s);
+      border-bottom: 1px solid var(--color-border-subtle);
+    }
+
+    .hero-rail li:last-child {
+      border-bottom: none;
+    }
+
+    .hero-rail-item {
+      display: grid;
+      grid-template-columns: 3rem 1fr;
+      grid-template-rows: auto auto;
+      column-gap: 0.75rem;
+      row-gap: 0.15rem;
+      padding: 0.7rem 0.15rem;
+      margin: 0 -0.15rem;
+      text-decoration: none;
+      color: inherit;
+      background: none;
+    }
+
+    .hero-rail-item:hover,
+    .hero-rail-item:focus-visible {
+      color: inherit;
+    }
+
+    .hero-rail-item:focus-visible {
+      outline: var(--focus-ring-width) solid var(--focus-ring-color);
+      outline-offset: var(--focus-ring-offset);
+    }
+
+    .hero-rail-item:focus-visible .hero-rail-title,
+    .hero-rail-item:hover .hero-rail-title {
+      text-decoration: underline;
+      text-underline-offset: 0.18em;
+      text-decoration-thickness: 1.5px;
+      text-decoration-color: color-mix(in srgb, var(--color-text) 70%, transparent);
+      color: var(--color-text);
+    }
+
+    .hero-rail-meta {
+      grid-row: 1 / span 2;
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      letter-spacing: 0.04em;
+      color: var(--color-text-muted);
+      padding-top: 0.25rem;
+    }
+
+    .hero-rail-title {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--color-text);
+      line-height: 1.35;
+      letter-spacing: -0.015em;
+    }
+
+    .hero-rail-summary {
+      font-size: 0.8125rem;
+      color: var(--color-text-secondary);
+      line-height: 1.45;
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .also-shipping,
+    .community {
+      padding-top: 2.25rem;
+      margin-bottom: 0;
+      border-top: 1px solid var(--color-border);
+    }
+
+    .also-shipping h2,
+    .community h2 {
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      line-height: 1.25;
+      margin: 0 0 0.85rem;
+      color: var(--color-text);
+    }
+
+    .also-shipping,
+    .community {
+      padding-bottom: 2.25rem;
+    }
+
+    .community-copy h2 {
+      margin-top: 0;
+    }
+
+    .home-product-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1rem;
+      margin: 0 0 1.15rem;
+      max-width: none;
+      width: 100%;
+      align-items: stretch;
+    }
+
+    .home-product-grid > :global(*) {
+      height: 100%;
+      min-height: 100%;
+      min-width: 0;
+    }
+
+    .community {
+      display: flex;
+      flex-direction: column;
+      gap: 1.35rem;
+    }
+
+    .community-intro {
+      margin: 0 0 1.15rem;
+      color: var(--color-text);
+      font-size: 1.0625rem;
+      line-height: 1.65;
+      max-width: 36rem;
+    }
+
+    .community-lead {
+      display: grid;
+      grid-template-columns: 7.5rem minmax(0, 1fr);
+      gap: 0.75rem 1rem;
+      align-items: center;
+      margin: 0;
+      text-decoration: none;
+      color: inherit;
+      min-width: 0;
+      width: 100%;
+    }
+
+    .community-lead:focus-visible {
+      outline: var(--focus-ring-width) solid var(--focus-ring-color);
+      outline-offset: var(--focus-ring-offset);
+    }
+
+    .community-lead__media {
+      display: block;
+      border: 1px solid var(--color-border);
+      background: var(--color-bg-secondary);
+      overflow: hidden;
+      line-height: 0;
+    }
+
+    .community-lead__img {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      object-fit: cover;
+      /* Inovathon group shot reads better slightly lower-center */
+      object-position: 50% 42%;
+      display: block;
+    }
+
+    .community-lead__event {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+      margin-bottom: 0.3rem;
+    }
+
+    .community-lead__title {
+      display: block;
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.3;
+      color: var(--color-text);
+      text-wrap: balance;
+    }
+
+    .community-lead:hover .community-lead__title,
+    .community-lead:focus-visible .community-lead__title {
+      text-decoration: underline;
+      text-underline-offset: 0.18em;
+      text-decoration-thickness: 1.5px;
+      text-decoration-color: color-mix(in srgb, var(--color-text) 70%, transparent);
+    }
+
+    @media (min-width: 900px) {
+      .community {
+        display: grid;
+        grid-template-columns: minmax(14rem, 26rem) minmax(18rem, 1fr);
+        column-gap: 2.25rem;
+        row-gap: 0;
+        column-rule: 1px solid var(--color-border-subtle);
+        align-items: start;
+      }
+
+      .community-copy {
+        padding-right: 0.35rem;
+      }
+
+      .community-intro {
+        max-width: none;
+      }
+
+      .community-lead {
+        grid-template-columns: 1fr;
+        gap: 0.85rem;
+        align-items: start;
+      }
+
+      .community-lead__img {
+        aspect-ratio: 16 / 10;
+        max-height: none;
+        min-height: 12rem;
+      }
+
+      .community-lead__title {
+        font-size: 1.12rem;
+      }
+    }
+
+    @media (max-width: 899px) {
+      .home-product-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.75rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .home-page {
+        padding: 0 var(--pad-page-inline) 3.5rem;
+      }
+
+      .hero {
+        padding: 2rem 0 2rem;
+        margin-bottom: 0;
+      }
+
+      .hero-grid {
+        grid-template-columns: 1fr;
+        gap: 2.25rem;
+      }
+
+      .hero-right {
+        padding-left: 0;
+        border-left: none;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--color-border);
+      }
+
+      .home-product-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.65rem;
+        max-width: none;
+      }
+
+      /* Solo trailing card fills the empty half-row */
+      .home-product-grid > :global(:last-child:nth-child(odd)) {
+        grid-column: 1 / -1;
+      }
+
+      .home-product-grid :global(.feature-card--compact) {
+        padding: 0.75rem 0.7rem 0.85rem;
+      }
+
+      .home-product-grid :global(.feature-card--compact .feature-top) {
+        margin-bottom: 0.55rem;
+      }
+
+      .home-product-grid :global(.feature-card--compact .feature-icon-wrap),
+      .home-product-grid :global(.feature-card--compact .feature-icon) {
+        width: 1.85rem;
+        height: 1.85rem;
+      }
+
+      .home-product-grid :global(.feature-card--compact .feature-external) {
+        width: 1.5rem;
+        height: 1.5rem;
+      }
+
+      .home-product-grid :global(.feature-card--compact .feature-external svg) {
+        width: 12px;
+        height: 12px;
+      }
+
+      .home-product-grid :global(.feature-card--compact .feature-title) {
+        font-size: 0.95rem;
+        margin-bottom: 0.3rem;
+      }
+
+      .home-product-grid :global(.feature-card--compact .feature-desc) {
+        font-size: 0.75rem;
+        line-height: 1.4;
+        -webkit-line-clamp: 3;
+        margin-bottom: 0;
+      }
+
+      .home-product-grid :global(.feature-card--compact .feature-cta) {
+        font-size: 0.75rem;
+        padding-top: 0.65rem;
+      }
+
+      .home-product-grid :global(.feature-card--compact .feature-meta) {
+        font-size: 0.5625rem;
+        letter-spacing: 0.04em;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .home-product-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+        max-width: 22rem;
+      }
+    }
+  </style>
+</BaseLayout>

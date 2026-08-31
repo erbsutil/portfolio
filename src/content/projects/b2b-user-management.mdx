@@ -1,0 +1,52 @@
+---
+title: "B2B identity: One email, many companies: multi-tenant roles in Astro + React"
+role: "Senior Frontend Engineer"
+year: 2025
+outcomeSummary: "Replaced nick-per-company admin with Keycloak-backed roles so plans could depend on access, not one login per tenant."
+overview: "I owned the Astro/React identity microfrontend and shared auth package for a B2B identity change, working with backend and security: from isolated nick accounts (one nick, one company, everyone admin) to email-based multi-tenant access where one identity holds roles across companies."
+problem: "Users logged in with a nick, and one nick meant one company. Everyone was admin because there were no restricted roles. As the platform grew, businesses needed finer access control and one person managing more than one company."
+constraints:
+  - "The change touched every microfrontend that showed login or a user name."
+  - "Backend owned Keycloak enforcement; frontend needed a shared library to read the new session states."
+  - "No big-bang release. Gradual rollout without breaking active legacy sessions."
+approach: "With backend and security, we built registration, login, and role assignment as a central Astro/React microfrontend, plus an internal JS library for auth validation and Keycloak. That library exported shared User Profile and Login components injected across other microfrontends."
+keyDecisions:
+  - decision: "Auth in an internal package"
+    reasoning: "One place for validation, Keycloak calls, and auth UI beats copying login logic across microfrontends."
+    alternatives:
+      - "Copy login and session helpers into each microfrontend (rejected: code drifts apart and raises security risk)"
+      - "Single SPA shell owning all auth UI (rejected: too coupled to platform migration)"
+  - decision: "Atoms for local React state, Astro elsewhere"
+    reasoning: "Multi-step registration needed shared state inside one React app. Atoms fit that without inventing cross-island persistence."
+    alternatives:
+      - "Redux/global store across microfrontends (rejected: overkill and boundary leak)"
+  - decision: "Phased rollout"
+    reasoning: "Identity pieces went to production in stages so legacy sessions kept working."
+    alternatives:
+      - "Big-bang cutover (rejected: too much session risk)"
+techStack:
+  - "Astro"
+  - "React"
+  - "TypeScript"
+  - "Internal Atom-based State Management"
+  - "Keycloak (Auth integration)"
+  - "Tailwind CSS"
+impact:
+  metrics:
+    - label: "Identity model"
+      value: "1 email → many companies + roles"
+    - label: "Previous model"
+      value: "1 nick → 1 company (all admins)"
+    - label: "Auth distribution"
+      value: "Shared package across microfrontends"
+    - label: "Plan enablement"
+      value: "Role/company-based subscription tiers"
+  qualitative: "Identity went from 1 nick = 1 company to 1 email = multiple companies with roles. That model enabled plans that depend on roles and companies managed."
+learnings:
+  - "Microfrontends work when boundaries are clear. Auth crosses them, so a shared library was the right fix."
+  - "Phased identity rollout lowers the risk of migrating legacy auth."
+  - "Keycloak owns the truth; how the frontend reads claims still decides whether login and profile UI stay consistent across microfrontends."
+featured: true
+status: "completed"
+order: 2
+---

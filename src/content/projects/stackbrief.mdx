@@ -1,0 +1,77 @@
+---
+title: "StackBrief: Matching dependency briefs to the lockfile, not a CVE feed"
+role: "Product & full-stack engineer"
+year: 2026
+status: "completed"
+duration: "Weekend ship, Jul 2026"
+outcomeSummary: "Next.js + Windmill jobs against the real lockfile; Gemini writes the brief; Stripe for billing. Not another news digest."
+overview: "I wanted release notes matched to the versions I run, without living in feeds. The first idea was a news digest filtered by tech names. That looked weak against free newsletters, so I kept the pipeline and changed the job: say whether a release hits the lockfile. Built Next.js on Vercel plus a Windmill night pipeline on a VPS; Stripe, Telegram, locales, and continue-or-stop review rules came after the weekend ship. Same pipeline, infrastructure job, not a news digest."
+problem: "CVE tools answer 'is this vulnerable?' News digests answer 'what is trending?' Neither answers 'does this release hit the versions I run?' Dependabot is noisy. People maintaining small products still get surprised by breaking changes."
+constraints:
+  - "GitHub App may request contents read; the product only fetches root package.json and lockfile."
+  - "One stack per account in v1."
+  - "LLM cost has to survive R$29/mo or $9/mo: filter and shared cache before Gemini."
+  - "Secrets stay out of git; automation runs in an isolated workspace."
+  - "No CVE scanner, WhatsApp, or Team plan in v1."
+  - "Locale and Stripe currency must match (BRL for pt-BR, USD for en/es)."
+approach: "Next.js 16 on Vercel for auth, onboarding, briefing UI, and billing. Supabase with RLS. Windmill Bun pipeline at night: ingest, filter, version match, generate, deliver. Onboarding can trigger an on-demand brief so value does not wait for the nightly cron. Checkout selects locale-matched Stripe prices."
+keyDecisions:
+  - decision: "Turn the news digest into version-aware briefs instead of starting over"
+    reasoning: "Another news digest looked hard to defend against free newsletters. The ingest/filter/deliver path already existed; only the job changed."
+    alternatives:
+      - "Launch another news digest and compete with free newsletters"
+      - "Scrap the weekend build and start from scratch"
+  - decision: "Match against lockfile versions, not tech names alone"
+    reasoning: "Name-only matching invents adjacent tools and breaks trust. Quiet days only mean something if the versions are real."
+    alternatives:
+      - "Manual tags only (kept as fallback)"
+      - "Scan the whole repo (rejected)"
+  - decision: "Cache Gemini output by tech@version"
+    reasoning: "Without a shared cache, cost scales with users. With it, the same release text is reused."
+    alternatives:
+      - "Generate per user every night"
+  - decision: "Keep R$29 list price; skip a launch discount"
+    reasoning: "Without traffic, a permanent discount is mostly appearance. Pricing stayed a hypothesis until real usage."
+  - decision: "Add EN/ES and USD the day after ship"
+    reasoning: "BRL-only limits early reach for an engineering tool. Same product job, second currency."
+  - decision: "Write continue-or-stop review rules before paid users exist"
+    reasoning: "Keeps scope honest. Forces a short look at activation and trial-to-paid instead of shipping features forever."
+  - decision: "Fix session and auth redirects after a production audit"
+    reasoning: "Login and first brief fail more often from cookies, OAuth, and WAF than from landing copy."
+techStack:
+  - "Next.js 16 (App Router) + [locale] routing"
+  - "React / TypeScript"
+  - "Tailwind CSS 4 + shadcn/Radix"
+  - "next-intl (PT-BR, EN, ES)"
+  - "Supabase (Auth, PostgreSQL, RLS)"
+  - "Windmill (self-hosted, Bun/TS)"
+  - "Google Gemini Flash-Lite"
+  - "GitHub App (manifests only)"
+  - "Telegram Bot API"
+  - "Stripe Checkout / Portal / Webhooks (BRL + USD)"
+  - "Vercel"
+  - "PostHog"
+  - "Resend (optional weekly email)"
+impact:
+  metrics:
+    - label: "Product outcome"
+      value: "Live paid path at stackbrief.erbsu.com"
+    - label: "Gap filled"
+      value: "Lockfile match, between CVE scan and news digest"
+    - label: "Unit economics"
+      value: "Shared Gemini cache by tech@version"
+    - label: "GTM shipped"
+      value: "PT-BR/EN/ES · BRL/$ checkout · 14-day trial"
+    - label: "v1 scope cut"
+      value: "No CVE / WhatsApp / Team plans"
+  qualitative: "Dropped the news-digest framing before launch. The same ingest pipeline now answers an infrastructure job: does this release hit the versions you run? End-to-end path (onboarding → first brief → Stripe trial) is live without CVE/WhatsApp/Agency scope. Continue-or-stop rules decide the next cut from activation data, not from feature itch."
+learnings:
+  - "Research should challenge the idea, not dictate vanity pricing. Prefer a clear USD ceiling over a permanent discount with no traffic."
+  - "First lockfile-aware brief matters more than polish or extra languages."
+  - "WAF, Stripe configuration, and OAuth redirects sit on the path to the first useful screen."
+  - "Continue-or-stop rules written early are easier to keep than ones invented after you are attached to the build."
+  - "Say what the GitHub App permission allows and what the product actually fetches."
+  - "i18n without the matching currency is half done."
+featured: true
+order: 4
+---

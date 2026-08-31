@@ -1,0 +1,212 @@
+---
+/**
+ * Footer: copyright + two link groups (human, then agent surfaces).
+ */
+import { siteConfig } from '../config';
+import {
+  defaultLocale,
+  withLocale,
+  type AppLocale,
+} from '../i18n/config';
+import { getUi } from '../i18n/ui';
+import { identitySocialLinks } from '../lib/identityLinks';
+
+interface Props {
+  locale?: AppLocale;
+}
+
+const { locale = defaultLocale } = Astro.props;
+const ui = getUi(locale);
+const currentYear = new Date().getFullYear();
+const agentsHref = `${withLocale(locale, '/contact')}#mcp`;
+
+const socialLinks = identitySocialLinks();
+---
+
+<footer class="site-footer">
+  <div class="footer-container">
+    <span class="copyright">© {currentYear} {siteConfig.author.name}</span>
+
+    <nav class="footer-nav" aria-label={ui.footer.navLabel}>
+      <ul class="footer-group footer-group--human">
+        <li>
+          <a href={withLocale(locale, '/contact')}>{ui.footer.contact}</a>
+        </li>
+        <li>
+          <a
+            href="/Erick_Sutil_Resume.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {ui.footer.resume}<span class="visually-hidden"> {ui.opensNewTab}</span>
+          </a>
+        </li>
+        {
+          socialLinks.map((link) => (
+            <li>
+              <a href={link.url} target="_blank" rel="me noopener noreferrer">
+                {link.platform}
+                <span class="visually-hidden"> {ui.opensNewTab}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+
+      <ul class="footer-group footer-group--agents" aria-label={ui.footer.agentsLabel}>
+        <li>
+          <a href="/llms.txt">{ui.footer.llmsTxt}</a>
+        </li>
+        <li>
+          <a href="/llms-full.txt">{ui.footer.llmsFull}</a>
+        </li>
+        <li>
+          <a href="/resume.json">{ui.footer.resumeJson}</a>
+        </li>
+        <li>
+          <a href={agentsHref} title={ui.footer.mcpTitle}>{ui.footer.mcp}</a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    border-top: 1px solid var(--color-border);
+    padding: 2rem 1.5rem;
+    margin-top: auto;
+  }
+
+  .footer-container {
+    max-width: var(--max-width-content);
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1.25rem 2rem;
+  }
+
+  .copyright {
+    font-size: 0.8125rem;
+    color: var(--color-text-muted);
+    line-height: 1.4;
+    padding-top: 0.55rem;
+    flex-shrink: 0;
+  }
+
+  .footer-nav {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.35rem;
+    min-width: 0;
+  }
+
+  .footer-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: flex-end;
+    column-gap: 0;
+    row-gap: 0.15rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .footer-group li {
+    display: inline-flex;
+    align-items: baseline;
+    line-height: 1.3;
+  }
+
+  .footer-group li + li::before {
+    content: "·";
+    color: var(--color-text-muted);
+    opacity: 0.5;
+    user-select: none;
+    padding: 0 0.4rem;
+    line-height: 1.3;
+  }
+
+  .footer-group a {
+    font-size: 0.8125rem;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    transition: color 0.2s ease;
+    display: inline-flex;
+    align-items: baseline;
+    line-height: 1.3;
+    padding: 0.4rem 0.05rem;
+  }
+
+  .footer-group--agents a {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.01em;
+  }
+
+  .footer-group a:hover {
+    color: var(--color-text);
+  }
+
+  .footer-group a:focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
+    border-radius: 2px;
+    color: var(--color-text);
+  }
+
+  @media (max-width: 720px) {
+    .footer-container {
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      text-align: center;
+    }
+
+    .copyright {
+      padding-top: 0;
+      order: 2;
+    }
+
+    .footer-nav {
+      align-items: center;
+      width: 100%;
+      gap: 0.55rem;
+      order: 1;
+    }
+
+    .footer-group {
+      justify-content: center;
+      max-width: none;
+    }
+
+    /* Keep agent files on one line — wrapping left a lone · /api/mcp */
+    .footer-group--agents {
+      flex-wrap: nowrap;
+      justify-content: center;
+      max-width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding-top: 0.15rem;
+    }
+
+    .footer-group--agents::-webkit-scrollbar {
+      display: none;
+    }
+
+    .footer-group--agents a {
+      padding-block: 0.35rem;
+      white-space: nowrap;
+    }
+
+    .footer-group--human {
+      padding-bottom: 0.35rem;
+      border-bottom: 1px solid var(--color-border-subtle);
+      flex-wrap: wrap;
+    }
+  }
+</style>

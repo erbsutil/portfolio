@@ -1,0 +1,51 @@
+---
+title: "Sharing React Components via CDN"
+role: "Senior Frontend Engineer"
+year: 2025
+outcomeSummary: "Validated CDN-delivered React UI so consumers can update shared components without npm version bumps across microfrontends."
+overview: "Across the microfrontend platform, every shared UI change meant a new npm publish, version bumps in every consumer, and redeploys. This PoC checked whether we could serve live components from a CDN to React apps and, where needed, legacy stacks."
+problem: "Updating a shared button or token meant coordinated version bumps and redeploys across teams. That slowed routine UI fixes."
+constraints:
+  - "Had to work with existing React microfrontends without a full rewrite."
+  - "Deliverable as a compiled script URL on CDN, not npm."
+  - "Prefer a simple runtime approach over federation tooling."
+  - "Need a path for legacy non-React apps."
+approach: "First try: wrap remote React as Web Components. Complex props through the DOM were painful and clashed with internal libraries. Final approach: load plain React components from CDN in React apps, plus a thinner Web Component wrapper only for legacy."
+keyDecisions:
+  - decision: "React components over CDN"
+    reasoning: "Bundle, host, consume via script. Skips the npm update loop without adding federation complexity."
+    alternatives:
+      - "Use Module Federation / webpack remotes (rejected for PoC: heavier ops surface)"
+      - "Keep npm publish + coordinated bumps (as today: too slow for token/UI fixes)"
+  - decision: "Skip Web Components for the React apps"
+    reasoning: "Rich props through Custom Elements were awkward and conflicted with internal React libraries. Keep React as React."
+    alternatives:
+      - "Force all consumers through Custom Elements (rejected after prop/DOM friction)"
+  - decision: "Web Component wrapper for legacy only"
+    reasoning: "Older apps needed the UI without adopting React. A simplified Custom Element was the escape hatch."
+    alternatives:
+      - "Leave legacy on frozen npm copies (rejected: dual maintenance forever)"
+techStack:
+  - "React"
+  - "TypeScript"
+  - "Custom Elements API (Web Components)"
+  - "CDN Delivery"
+impact:
+  metrics:
+    - label: "Consumer update path"
+      value: "CDN script vs npm bump + redeploy"
+    - label: "React consumers"
+      value: "Direct React-from-CDN (no Web Components wrapper)"
+    - label: "Legacy path"
+      value: "Thin Custom Element wrapper only"
+    - label: "Federation tooling"
+      value: "Avoided for PoC scope"
+  qualitative: "Showed a path where core UI could ship to CDN and React consumers pick it up without a consumer redeploy. Also clarified when a Web Component wrapper is worth it (legacy) and when it is not."
+learnings:
+  - "A script on a CDN is often enough when the goal is less process, not a new platform."
+  - "Web Components look universal, but forcing them into a React-heavy stack often costs more than they save."
+  - "A legacy escape hatch can protect old systems without hurting the modern path."
+featured: true
+status: "completed"
+order: 3
+---

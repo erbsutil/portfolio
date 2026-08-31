@@ -1,0 +1,191 @@
+---
+/**
+ * SEO Component
+ *
+ * Meta tags for search + social previews (WhatsApp, LinkedIn, X, Facebook).
+ * Emits absolute canonical / og:url, locale-aware hreflang, and 1200×630 images.
+ */
+
+import { siteConfig } from "../config";
+import {
+  defaultLocale,
+  locales,
+  ogLocales,
+  withLocale,
+  type AppLocale,
+} from "../i18n/config";
+import { getUi } from "../i18n/ui";
+import { stripLocalePrefix } from "../i18n/config";
+
+interface Props {
+  title: string;
+  description?: string;
+  noSuffix?: boolean;
+  type?: "website" | "article" | "profile";
+  image?: string;
+  imageAlt?: string;
+  imageWidth?: number;
+  imageHeight?: number;
+  imageType?: string;
+  publishDate?: Date;
+  updatedDate?: Date;
+  canonicalURL?: string;
+  section?: string;
+  tags?: string[];
+  noIndex?: boolean;
+  locale?: AppLocale;
+  /** Unprefixed path for hreflang siblings, e.g. `/projects/foo` or `/` */
+  pathWithoutLocale?: string;
+}
+
+const {
+  title,
+  type = "website",
+  image,
+  imageAlt,
+  imageWidth = 1200,
+  imageHeight = 630,
+  imageType = "image/png",
+  publishDate,
+  updatedDate,
+  canonicalURL,
+  noSuffix = false,
+  section,
+  tags = [],
+  noIndex = false,
+  locale = defaultLocale,
+  pathWithoutLocale: pathProp,
+} = Astro.props;
+
+const ui = getUi(locale);
+const description = Astro.props.description ?? ui.site.description;
+
+const siteBase = siteConfig.url.replace(/\/$/, "");
+const siteSlash = `${siteBase}/`;
+
+const fullTitle = noSuffix
+  ? title
+  : title
+    ? `${title} | ${siteConfig.author.name}`
+    : ui.site.title;
+
+function toCanonical(raw: string): string {
+  try {
+    if (raw.startsWith("http://") || raw.startsWith("https://")) {
+      const u = new URL(raw);
+      let path = u.pathname || "/";
+      if (!path.endsWith("/") && !/\.\w+$/.test(path)) path += "/";
+      return `${siteBase}${path === "//" ? "/" : path}`;
+    }
+  } catch {
+    /* fall through */
+  }
+  let path = raw.startsWith("/") ? raw : `/${raw}`;
+  if (!path.endsWith("/") && !/\.\w+$/.test(path)) path += "/";
+  return `${siteBase}${path}`;
+}
+
+const inferredPath =
+  pathProp ??
+  stripLocalePrefix(Astro.url.pathname || "/").pathnameWithoutLocale;
+
+const currentURL = toCanonical(
+  canonicalURL || withLocale(locale, inferredPath),
+);
+
+/** Bump filename when regenerating so LinkedIn / WhatsApp refetch (they cache hard). */
+const defaultImage = `${siteSlash}og-portfolio.png`;
+const ogImageRaw = image || defaultImage;
+const absoluteImageURL = ogImageRaw.startsWith("http")
+  ? ogImageRaw
+  : `${siteSlash}${ogImageRaw.replace(/^\//, "")}`;
+
+const shareTitle = fullTitle;
+const shareDescription =
+  description.length > 200
+    ? `${description.slice(0, 197).trimEnd()}…`
+    : description;
+
+const ogImageAlt =
+  imageAlt || `${siteConfig.author.name} · ${title}`.slice(0, 120);
+
+const twitterHandle = siteConfig.social.twitter
+  ? `@${siteConfig.social.twitter.split("/").filter(Boolean).pop()}`
+  : undefined;
+
+const robots = noIndex
+  ? "noindex, nofollow"
+  : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1";
+
+const alternateUrls = locales.map((code) => ({
+  code,
+  href: toCanonical(withLocale(code, inferredPath)),
+}));
+
+const xDefaultHref = toCanonical(withLocale(defaultLocale, inferredPath));
+const otherLocales = locales.filter((code) => code !== locale);
+---
+
+<title>{fullTitle}</title>
+<meta name="description" content={shareDescription} />
+<meta name="robots" content={robots} />
+<meta name="googlebot" content={robots} />
+<link rel="canonical" href={currentURL} />
+{
+  alternateUrls.map(({ code, href }) => (
+    <link rel="alternate" hreflang={code} href={href} />
+  ))
+}
+<link rel="alternate" hreflang="x-default" href={xDefaultHref} />
+<meta name="author" content={siteConfig.author.name} />
+
+<meta property="og:type" content={type} />
+<meta property="og:url" content={currentURL} />
+<meta property="og:title" content={shareTitle} />
+<meta property="og:description" content={shareDescription} />
+<meta property="og:site_name" content={ui.site.title} />
+<meta property="og:locale" content={ogLocales[locale]} />
+{
+  otherLocales.map((code) => (
+    <meta property="og:locale:alternate" content={ogLocales[code]} />
+  ))
+}
+<meta property="og:image" content={absoluteImageURL} />
+<meta property="og:image:secure_url" content={absoluteImageURL} />
+<meta property="og:image:type" content={imageType} />
+<meta property="og:image:width" content={String(imageWidth)} />
+<meta property="og:image:height" content={String(imageHeight)} />
+<meta property="og:image:alt" content={ogImageAlt} />
+
+{
+  type === "article" && (
+    <>
+      <meta property="article:author" content={siteConfig.author.name} />
+      {publishDate && (
+        <meta
+          property="article:published_time"
+          content={publishDate.toISOString()}
+        />
+      )}
+      {(updatedDate || publishDate) && (
+        <meta
+          property="article:modified_time"
+          content={(updatedDate || publishDate)!.toISOString()}
+        />
+      )}
+      {section && <meta property="article:section" content={section} />}
+      {tags.map((tag) => (
+        <meta property="article:tag" content={tag} />
+      ))}
+    </>
+  )
+}
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:url" content={currentURL} />
+<meta name="twitter:title" content={shareTitle} />
+<meta name="twitter:description" content={shareDescription} />
+<meta name="twitter:image" content={absoluteImageURL} />
+<meta name="twitter:image:alt" content={ogImageAlt} />
+{twitterHandle && <meta name="twitter:site" content={twitterHandle} />}
+{twitterHandle && <meta name="twitter:creator" content={twitterHandle} />}

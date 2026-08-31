@@ -1,0 +1,183 @@
+---
+/**
+ * StackBrief case body (screenshots + architecture). Locale-aware copy.
+ */
+import { Image } from "astro:assets";
+import type { AppLocale } from "../../i18n/config";
+import screenBriefing from "../../assets/images/screens/stackbrief/app-briefing.png";
+import screenStack from "../../assets/images/screens/stackbrief/app-stack.png";
+import screenChannels from "../../assets/images/screens/stackbrief/app-channels.png";
+import screenBilling from "../../assets/images/screens/stackbrief/billing-assinatura.png";
+import screenStripe from "../../assets/images/screens/stackbrief/billing-stripe.png";
+
+interface Props {
+  locale: AppLocale;
+}
+
+const { locale } = Astro.props;
+const pt = locale === "pt-BR";
+
+const copy = pt
+  ? {
+      snapshots: "Capturas do produto",
+      snapshotsIntro:
+        "Em produção em [stackbrief.erbsu.com](https://stackbrief.erbsu.com). Telas do app logado (PT-BR).",
+      dailyBrief: "Resumo do dia",
+      briefAlt:
+        "Painel do StackBrief com o resumo de dependências do dia e um item acionável",
+      briefCaption:
+        "Resumo do dia: item com ação sugerida e por que isso importa para esta stack.",
+      stack: "Stack",
+      stackAlt:
+        "Configuração de stack no StackBrief com conexão GitHub e seleção manual",
+      stackCaption:
+        "Stack: caminho do lockfile no GitHub (preferido) ou lista manual de tecnologias.",
+      channels: "Canais",
+      channelsAlt:
+        "Configuração de canais no StackBrief com Telegram e e-mail semanal opcional",
+      channelsCaption:
+        "Canais: o painel é o principal; Telegram e e-mail semanal são opcionais.",
+      billing: "Cobrança",
+      billingAlt:
+        "Tela de assinatura do StackBrief com planos mensal e anual durante o período de teste",
+      stripeAlt:
+        "Checkout Stripe da assinatura StackBrief Pro mensal em reais",
+      billingCaption:
+        "Assinatura mensal ou anual (o idioma define BRL ou USD). O Stripe Checkout cobre cartão e Apple Pay; o portal do cliente, mudanças depois.",
+      architecture: "Arquitetura",
+      architectureBody:
+        "Painel na Vercel (Next.js). Motor noturno no Windmill (VPS). Supabase compartilhado com RLS. No primeiro acesso dá para gerar um resumo na hora, sem esperar o cron da noite.",
+      whatICut: "O que cortei",
+      whatICutBody:
+        "Scanner de CVE. WhatsApp. Planos Team e Agency. Preço baixo permanente sem tráfego. Promessas infladas de ROI na landing. Cortei o que saía da pergunta do produto: este release da dependência afeta uma versão que o seu projeto já usa?",
+    }
+  : {
+      snapshots: "Product snapshots",
+      snapshotsIntro:
+        "Live at [stackbrief.erbsu.com](https://stackbrief.erbsu.com). App screens from the logged-in product (PT-BR).",
+      dailyBrief: "Daily brief",
+      briefAlt:
+        "StackBrief dashboard showing today's dependency brief with an actionable item",
+      briefCaption:
+        "Daily brief: item with a suggested action and why it matters for this stack.",
+      stack: "Stack",
+      stackAlt:
+        "StackBrief stack settings with GitHub connect and manual selection options",
+      stackCaption:
+        "Stack: GitHub lockfile path (preferred) or a manual tech list.",
+      channels: "Channels",
+      channelsAlt:
+        "StackBrief channels settings with Telegram connect and weekly email option",
+      channelsCaption:
+        "Channels: the panel is primary; Telegram and weekly email are optional.",
+      billing: "Billing",
+      billingAlt:
+        "StackBrief subscription screen with monthly and annual plans during trial",
+      stripeAlt:
+        "Stripe Checkout for StackBrief Pro monthly subscription in Brazilian Real",
+      billingCaption:
+        "Monthly or annual subscription (locale sets BRL or USD). Stripe Checkout handles card and Apple Pay; the customer portal covers later changes.",
+      architecture: "Architecture",
+      architectureBody:
+        "Dashboard on Vercel (Next.js). Night engine on Windmill (VPS). Shared Supabase with RLS. First access can generate a brief on demand so value does not wait for the nightly cron.",
+      whatICut: "What I cut",
+      whatICutBody:
+        "CVE scanner. WhatsApp. Team/Agency plans. Permanent low price without traffic. Inflated ROI claims on the landing. I cut anything that left the product question: does this dependency release affect a version your project already uses?",
+    };
+
+function linkify(text: string) {
+  const match = text.match(/^(.*)\[([^\]]+)\]\(([^)]+)\)(.*)$/);
+  if (!match) return { before: text, label: null as string | null, href: null as string | null, after: "" };
+  return { before: match[1], label: match[2], href: match[3], after: match[4] };
+}
+
+const intro = linkify(copy.snapshotsIntro);
+---
+
+<>
+  <h2>{copy.snapshots}</h2>
+  <p>
+    {intro.before}
+    {
+      intro.label && intro.href && (
+        <a href={intro.href} target="_blank" rel="noopener noreferrer">
+          {intro.label}
+        </a>
+      )
+    }
+    {intro.after}
+  </p>
+
+  <h3>{copy.dailyBrief}</h3>
+  <figure class="case-study-shot">
+    <Image
+      src={screenBriefing}
+      alt={copy.briefAlt}
+      widths={[320, 640, 960]}
+      sizes="(max-width: 768px) 92vw, 640px"
+      loading="lazy"
+      decoding="async"
+      class="case-study-shot__img"
+    />
+    <figcaption>{copy.briefCaption}</figcaption>
+  </figure>
+
+  <h3>{copy.stack}</h3>
+  <figure class="case-study-shot">
+    <Image
+      src={screenStack}
+      alt={copy.stackAlt}
+      widths={[320, 640, 960]}
+      sizes="(max-width: 768px) 92vw, 640px"
+      loading="lazy"
+      decoding="async"
+      class="case-study-shot__img"
+    />
+    <figcaption>{copy.stackCaption}</figcaption>
+  </figure>
+
+  <h3>{copy.channels}</h3>
+  <figure class="case-study-shot">
+    <Image
+      src={screenChannels}
+      alt={copy.channelsAlt}
+      widths={[320, 640, 960]}
+      sizes="(max-width: 768px) 92vw, 640px"
+      loading="lazy"
+      decoding="async"
+      class="case-study-shot__img"
+    />
+    <figcaption>{copy.channelsCaption}</figcaption>
+  </figure>
+
+  <h3>{copy.billing}</h3>
+  <figure class="case-study-shot case-study-shot--pair">
+    <div class="case-study-shot__pair">
+      <Image
+        src={screenBilling}
+        alt={copy.billingAlt}
+        widths={[320, 640, 960]}
+        sizes="(max-width: 768px) 92vw, 45vw"
+        loading="lazy"
+        decoding="async"
+        class="case-study-shot__img"
+      />
+      <Image
+        src={screenStripe}
+        alt={copy.stripeAlt}
+        widths={[320, 640, 960]}
+        sizes="(max-width: 768px) 92vw, 45vw"
+        loading="lazy"
+        decoding="async"
+        class="case-study-shot__img"
+      />
+    </div>
+    <figcaption>{copy.billingCaption}</figcaption>
+  </figure>
+
+  <h2>{copy.architecture}</h2>
+  <p>{copy.architectureBody}</p>
+
+  <h2>{copy.whatICut}</h2>
+  <p>{copy.whatICutBody}</p>
+</>
